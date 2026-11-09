@@ -1,5 +1,6 @@
 *.xlsx
 *.xlsm
 *.json
+!npd_data.json
 __pycache__/
 .venv/
