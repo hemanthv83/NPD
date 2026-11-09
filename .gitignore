@@ -1,0 +1,5 @@
+# Never commit tracker data
+*.xlsx
+*.xlsm
+*.json
+!package.json
