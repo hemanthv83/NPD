@@ -1,0 +1,2667 @@
+{
+ "app": "NPD Sourcing Tracker",
+ "savedAt": "2026-11-09T22:20:00",
+ "data": {
+  "mqis": [
+   [
+    "Sl.No",
+    "Part No",
+    "Part Name",
+    "BOM Qty/Set",
+    "UOM",
+    "Buyer",
+    "Supplier",
+    "Project",
+    "MAKE/ MPN-1",
+    "MAKE/ MPN -2",
+    "MAKE/MPN-3",
+    "Price"
+   ],
+   [
+    [
+     1,
+     2040220270,
+     "EMBEDDED COMPUTER",
+     1,
+     "Nos",
+     "Hemanth",
+     "AMAARA TECHNOLOGIES",
+     "Common",
+     "LENOVO/11RJ00AFHA",
+     null,
+     null,
+     66500
+    ],
+    [
+     2,
+     2040220289,
+     "UPS WITHOUT ISOLATION 1KVA",
+     1,
+     "Nos",
+     "Hemanth",
+     "Fuji Electric Private Limited",
+     "Common",
+     "FUJI/FML11X000133T596",
+     null,
+     null,
+     16350
+    ],
+    [
+     3,
+     2040310081,
+     "DOCK FAN WITH CONNECTOR_DC 190 CFM",
+     16,
+     "Nos",
+     "Hemanth",
+     "sofasco",
+     "Common",
+     "SOFASCO/D12038V24HB-R-RD",
+     null,
+     null,
+     "$5.5"
+    ],
+    [
+     4,
+     2040220295,
+     "FERRITE CORE-DISPLAY TOUCH CABLE",
+     1,
+     "Nos",
+     "Hemanth",
+     "WURTH ELECTRONICS SERVICES",
+     "Common",
+     "WURTH/74272222",
+     null,
+     null,
+     262
+    ],
+    [
+     5,
+     2040220089,
+     "40X80 CABLE TRUFF FRLS",
+     2,
+     "Mtr",
+     "Hemanth",
+     "Veer Electric",
+     "Common",
+     "SALZER/40X80 FRLS",
+     null,
+     null,
+     147
+    ],
+    [
+     6,
+     2040120005,
+     "DC DC 24-12 CONVERTER",
+     1,
+     "Nos",
+     "Hemanth",
+     "SHENZHEN DAYGREEN TECHNOLOGY",
+     "Common",
+     "DAYGREEN/B05-24-12",
+     null,
+     null,
+     "$2.32"
+    ],
+    [
+     7,
+     2040220058,
+     "MODBUS TEMP/HUMIDITY SENSOR",
+     2,
+     "Nos",
+     "Hemanth",
+     "SUGI Electronics",
+     "Common",
+     "SHANDONG RENKE CONTROL TECHNOLOGY/RS-WS-N01-8/RS485",
+     null,
+     null,
+     983
+    ],
+    [
+     8,
+     2040220110,
+     "CABLE MANAGEMENT",
+     19,
+     "Nos",
+     "Hemanth",
+     "SUMAN ELECTRIC UDYOGS (P) LTD | 00124",
+     "Common",
+     "ABM2S-A-D",
+     null,
+     null,
+     1.75
+    ],
+    [
+     9,
+     2040120114,
+     "SPD",
+     1,
+     "Nos",
+     "Hemanth",
+     "ALLTRONIX | 01461",
+     "P1R5",
+     "PHOENIX CONTACT/2910574",
+     null,
+     null,
+     1400
+    ],
+    [
+     10,
+     2040220173,
+     "2A GLASS FUSE",
+     4,
+     "Nos",
+     "Hemanth",
+     "PROTECTRON ELECTROMECH PVT LTD | 00718",
+     "Common",
+     "PROTECTRON/PSF2A",
+     null,
+     null,
+     2.1
+    ],
+    [
+     11,
+     2040220325,
+     "TERMINAL BLOCK M5",
+     6,
+     "Nos",
+     "Hemanth",
+     "MANGAL JYOTHI ELECTRICALS | SMV222",
+     "P1R5",
+     "ELMAX/KBTM5-15C",
+     null,
+     null,
+     41
+    ],
+    [
+     12,
+     2040220153,
+     "EMERGENCY SWITCH",
+     1,
+     "Nos",
+     "Hemanth",
+     "Krushi Solutions",
+     "Common",
+     "TEKNIC/2PSML411",
+     null,
+     null,
+     307
+    ],
+    [
+     13,
+     2050220223,
+     "PIN LUGS 0.5 SQ.MM CE005008",
+     8,
+     "Nos",
+     "Hemanth",
+     "SULOCHANA ENTERPRISES | SMV214",
+     "Common",
+     "FUJI TERMINAL/ CE005008",
+     null,
+     null,
+     0.62
+    ],
+    [
+     14,
+     2040420001,
+     "MULTI PORT USB HUB",
+     1,
+     "Nos",
+     "Hemanth",
+     "CREATIVE/VRP",
+     "Common",
+     "HONEYWELL/MOMENTUM HUB",
+     null,
+     null,
+     280
+    ],
+    [
+     15,
+     2040220084,
+     "PANEL LAMP",
+     1,
+     "Nos",
+     "Hemanth",
+     "DYNAMIC TRADELINKS | 01015",
+     "Common",
+     "PHILIPS/919215850549",
+     null,
+     null,
+     174
+    ],
+    [
+     16,
+     2040220221,
+     "4P RCCB 30MA,32A -C&S",
+     2,
+     "Nos",
+     "Hemanth",
+     "K.H TRADERS | SMV188",
+     "P1R5",
+     "C&S Electric/CSRB4P32A30",
+     null,
+     null,
+     1546.66
+    ],
+    [
+     17,
+     2040130116,
+     "RCCB 2 POLE 40A",
+     1,
+     "Nos",
+     "Hemanth",
+     "SUGI Electronics",
+     "P1R5",
+     "CHINT/NL1-63 2P 40A 30mA A 10kA DB",
+     null,
+     null,
+     1304
+    ],
+    [
+     18,
+     2040220043,
+     "TB END CLAMPS",
+     4,
+     "Nos",
+     "Hemanth",
+     "MANGAL JYOTHI ELECTRICALS | SMV222",
+     "Common",
+     "CONNECTWELL/CA702",
+     "ELMEX/SCUN",
+     null,
+     8
+    ],
+    [
+     19,
+     2040220198,
+     "SEALING GLAND M40 X 1.5 - TRGM40B",
+     1,
+     "Nos",
+     "Hemanth",
+     "SUMAN ELECTRIC UDYOGS (P) LTD | 00124",
+     "Common",
+     "CONTROLWELL/TRGM40B",
+     null,
+     null,
+     104.63
+    ],
+    [
+     20,
+     2040310045,
+     "PANEL MOUNT RJ45 CONNECTOR",
+     1,
+     "Nos",
+     "Hemanth",
+     "SHENZHEN LINKO ELECTRIC CO., LTD | SMV952",
+     "Common",
+     "LINKO ELECTRIC/LP16",
+     null,
+     null,
+     "$2.24"
+    ],
+    [
+     21,
+     2040220167,
+     "RING TERMINAL M5,16SQMM WIRE",
+     5,
+     "Nos",
+     "Hemanth",
+     "DYNAMIC TRADELINKS | 01015",
+     "P1R5",
+     "3D/3D-2652",
+     null,
+     null,
+     8.5
+    ],
+    [
+     22,
+     2040220170,
+     "EMERGENCY SW WARNING PLATE",
+     1,
+     "Nos",
+     "Hemanth",
+     "Krushi Solutions",
+     "Common",
+     "TEKNIC/2LP41",
+     null,
+     null,
+     23
+    ],
+    [
+     23,
+     2040220169,
+     "EMERGENCY SWITCH COVER",
+     1,
+     "Nos",
+     "Hemanth",
+     "Krushi Solutions",
+     "Common",
+     "TEKNIC/2PAM7EH",
+     null,
+     null,
+     103
+    ],
+    [
+     24,
+     2040220078,
+     "ETHERNET S/W",
+     1,
+     "Nos",
+     "Hemanth",
+     "UL-Electro",
+     "Common",
+     "OROING/ IES-C1080-L",
+     "PHOENIX CONTACT/FL SWITCH 1008N",
+     "3ONEDATA/IES318",
+     4365
+    ],
+    [
+     25,
+     2040220248,
+     "ENERGY METER 230V-1 PHASE",
+     1,
+     "Nos",
+     "Hemanth",
+     "SUMAN ELECTRIC UDYOGS (P) LTD | 00124",
+     "Common",
+     "SELC/EM2M-IP-C-100A",
+     null,
+     null,
+     1530
+    ],
+    [
+     26,
+     2040220096,
+     "6MM SPIRAL FR GRADE",
+     5,
+     "Mtr",
+     "Hemanth",
+     "SUMAN ELECTRIC UDYOGS (P) LTD | 00124",
+     "Common",
+     "AS PER DRAWING",
+     null,
+     null,
+     2.8
+    ],
+    [
+     27,
+     2040410012,
+     "VCI EMITTER",
+     1,
+     "Nos",
+     "Hemanth",
+     "AKSHAY INCORPORATION | 00016",
+     "Common",
+     "PROTEC/P-51",
+     null,
+     null,
+     600
+    ],
+    [
+     28,
+     2040220128,
+     "2 WAY TB FOR PANEL LAMP",
+     3,
+     "Nos",
+     "Hemanth",
+     "RAJ ELECTRO CONTROLS",
+     "Common",
+     "AIRON/CTB1206P",
+     null,
+     null,
+     10
+    ],
+    [
+     29,
+     2040220296,
+     "FERRITE CORE-HDMI CABLE",
+     1,
+     "Nos",
+     "Hemanth",
+     "WURTH ELECTRONICS SERVICES",
+     "Common",
+     "WURTH ELEKTRONIK/74275813",
+     null,
+     null,
+     134
+    ],
+    [
+     30,
+     2040310003,
+     "12V VRLA BATTERY",
+     3,
+     "Nos",
+     "Hemanth",
+     "Fuji Electric Private Limited",
+     "Common",
+     "AMARON/12AL026 VRLA SMF",
+     null,
+     null,
+     2300
+    ],
+    [
+     31,
+     2040220123,
+     "DLS",
+     2,
+     "Nos",
+     "Hemanth",
+     "SUMAN ELECTRIC UDYOGS (P) LTD | 00124",
+     "Common",
+     "VAISHNO/CLS-1010-1",
+     null,
+     null,
+     100
+    ],
+    [
+     32,
+     2040220097,
+     "9MM SPIRAL FR GRADE",
+     10,
+     "Mtr",
+     "Hemanth",
+     "DYNAMIC TRADELINKS | 01015",
+     "Single Phs",
+     "AS PER DRAWING",
+     null,
+     null,
+     4.2
+    ],
+    [
+     33,
+     2040220387,
+     "ENERGY METER-3PH",
+     1,
+     "Nos",
+     "Hemanth",
+     "SUMAN ELECTRIC UDYOGS (P) LTD | 00124",
+     "Single Phs",
+     "SELEC/MFM384-R-C",
+     null,
+     null,
+     3840
+    ],
+    [
+     34,
+     2040220379,
+     "3POLE POWER TERMINAL BLOCK",
+     1,
+     "Nos",
+     "Hemanth",
+     "SULOCHANA ENTERPRISES | SMV214",
+     "Single Phs",
+     " ",
+     null,
+     null,
+     922.5
+    ],
+    [
+     35,
+     2040220148,
+     "INDICATION LAMP Y, 22.5MM DIA, YELLOW COLOUR",
+     1,
+     "Nos",
+     "Hemanth",
+     "SUMAN ELECTRIC UDYOGS (P) LTD | 00124",
+     "Single Phs",
+     "VAISHNO/2XVLDILBNMY",
+     null,
+     null,
+     66
+    ],
+    [
+     36,
+     2040220378,
+     "RCCB 2POLE 63A",
+     1,
+     "Nos",
+     "Hemanth",
+     "K.H TRADERS | SMV188",
+     "Single Phs",
+     "C&SCSRB2P63A30-10 kA",
+     null,
+     null,
+     2061.5
+    ],
+    [
+     37,
+     2040220149,
+     "INDICATION LAMP B, 22.5MM DIA, BLUE COLOUR",
+     1,
+     "Nos",
+     "Hemanth",
+     "SUMAN ELECTRIC UDYOGS (P) LTD | 00124",
+     "Single Phs",
+     "VAISHNO/2XVLDILBNMBL",
+     null,
+     null,
+     108
+    ],
+    [
+     38,
+     2040220147,
+     "INDICATION LAMP R, 22.5MM DIA, RED COLOUR",
+     1,
+     "Nos",
+     "Hemanth",
+     "SUMAN ELECTRIC UDYOGS (P) LTD | 00124",
+     "Single Phs",
+     "VAISHNO/2XVLDILBNMR",
+     null,
+     null,
+     66
+    ],
+    [
+     39,
+     2040220377,
+     "RCCB 4POLE 63A",
+     2,
+     "Nos",
+     "Hemanth",
+     "K.H TRADERS | SMV188",
+     "Single Phs",
+     "C&S /CSRB4P63A30-10 kA",
+     null,
+     null,
+     2240
+    ],
+    [
+     40,
+     2040220386,
+     "3POLE CONTACTOR 230VAC 60A",
+     1,
+     "Nos",
+     "Hemanth",
+     "K.H TRADERS | SMV188",
+     "Single Phs",
+     "C&S/TC1D4011",
+     null,
+     null,
+     4354.8
+    ],
+    [
+     41,
+     2040220385,
+     "CURRENT TRANSFORMER-CT",
+     3,
+     "Nos",
+     "Hemanth",
+     "EXCELL MAGNETICS",
+     "Single Phs",
+     "KALPA ELECTRICAL PVT LTD./63/5A, 10VA, CL-1.0,",
+     null,
+     null,
+     556.5
+    ],
+    [
+     42,
+     2040220388,
+     "6A FUSE TB",
+     4,
+     "Nos",
+     "Hemanth",
+     "K S J POWER CONTROL | 01424",
+     "Single Phs",
+     "CONNECTWELL/CF4U",
+     null,
+     null,
+     34.65
+    ],
+    [
+     43,
+     2040220389,
+     "MCCB FOR STATION PROTECTION",
+     1,
+     "Nos",
+     "Hemanth",
+     "K.H TRADERS | SMV188",
+     "Single Phs",
+     "C&S/CSESL125FMU3P-63A",
+     null,
+     null,
+     2404.5
+    ],
+    [
+     44,
+     2030220047,
+     "TERMINAL_BLOCK_M8XM8",
+     2,
+     "Nos",
+     "Hemanth",
+     "SULOCHANA ENTERPRISES | SMV214",
+     "Single Phs",
+     "POWERMAT/RH21.26.HF8.07RF8.07",
+     null,
+     null,
+     43.5
+    ],
+    [
+     45,
+     2040220301,
+     "SURGE PROTECTION DEVICE -TYPE 2",
+     1,
+     "Nos",
+     "Hemanth",
+     "ALLTRONIX | 01461",
+     "Single Phs",
+     "PHOENIX CONTACT/VAL-MS 320/3+1/FM(2859181)",
+     null,
+     null,
+     4520
+    ],
+    [
+     46,
+     2040220383,
+     "VOLTAGE PROTECTION RELAY-UVOV",
+     1,
+     "Nos",
+     "Hemanth",
+     "SULOCHANA ENTERPRISES | SMV214",
+     "Single Phs",
+     "GIC/MD71BH",
+     null,
+     null,
+     1417.5
+    ],
+    [
+     47,
+     2040220384,
+     "16A 10KA DOUBLE POLE MCB",
+     1,
+     "Nos",
+     "Hemanth",
+     "K.H TRADERS | SMV188",
+     "Single Phs",
+     "C&S/CSMBS2C16",
+     null,
+     null,
+     374.4
+    ]
+   ]
+  ],
+  "ds6": [
+   [
+    "S. No.",
+    "Part No.",
+    "Part Name",
+    "Rev",
+    "Qty",
+    "UOM",
+    "Qyt Required for 50  Sets",
+    "Vendor",
+    "MAKE/MPN",
+    "Unit Cost"
+   ],
+   [
+    [
+     1,
+     2040220110,
+     "1\" INCH TIE BASE",
+     "OR",
+     8,
+     "Nos",
+     400,
+     "SUMAN",
+     "AS PER DRAWING",
+     2.5
+    ],
+    [
+     2,
+     2040220325,
+     "TERMINAL BLOCK M5",
+     "OR",
+     18,
+     "Nos",
+     900,
+     "Mangalajyothi Electricals",
+     "ELMAX/KBTM5-15C",
+     41
+    ],
+    [
+     3,
+     2040120114,
+     "SPD",
+     "D0",
+     1,
+     "Nos",
+     50,
+     "ALLTRONIX",
+     "PHOENIX CONTACT/2910574",
+     1400
+    ],
+    [
+     4,
+     2040120060,
+     "CABLE TIE 200MM - WHITE",
+     "A",
+     18,
+     "Nos",
+     900,
+     "DYANAMIC TRADELINKS",
+     "AS PER DRAWING",
+     0.65
+    ],
+    [
+     5,
+     2040220369,
+     "SHUNT COIL-24VDC",
+     "D0",
+     1,
+     "Nos",
+     50,
+     "Sugi",
+     "CHINT/184985",
+     390
+    ],
+    [
+     6,
+     2040220043,
+     "TB END CLAMPS",
+     "OR",
+     2,
+     "Nos",
+     100,
+     "Mangalajyothi Electricals",
+     "CONNECTWELL/CA702",
+     8
+    ],
+    [
+     7,
+     2040210792,
+     "SOUTH-CO 8 SERIES, DOCK DOOR LOCK - 3DS",
+     "D1",
+     2,
+     "Nos",
+     100,
+     "South CO",
+     "SOUNTHCO/R4-EM-82-230",
+     1750
+    ],
+    [
+     8,
+     2040220373,
+     "FERRITE CORE 182 OHM HINGED 5MM",
+     "D0",
+     2,
+     "Nos",
+     100,
+     "wruth",
+     "WURTH/74271142",
+     100
+    ],
+    [
+     9,
+     2040220304,
+     "EMERGENCY PUSH BUTTON",
+     "D0",
+     2,
+     "NOS",
+     100,
+     "KRUSHI",
+     "TEKNIC/3PSML411",
+     263
+    ],
+    [
+     10,
+     2040220367,
+     "RCBO 40A-4P",
+     "D0",
+     1,
+     "Nos",
+     50,
+     "SUGI",
+     "CHINT/198138",
+     2030
+    ],
+    [
+     11,
+     2040220372,
+     "SOCKET FOR MINATURE POWER RELAY-6DS",
+     "D0",
+     6,
+     "Nos",
+     300,
+     "AMAR",
+     "O/E/N/085-4900-100",
+     220
+    ],
+    [
+     12,
+     2040220370,
+     "MINATURE POWER RELAY-6DS",
+     "D0",
+     6,
+     "Nos",
+     300,
+     "AMAR",
+     "O/E/N/85D-024-1CK-S",
+     112
+    ],
+    [
+     13,
+     2040220368,
+     "AUXILARY SWITCH-1C/O",
+     "D0",
+     1,
+     "Nos",
+     50,
+     "SUGI",
+     "CHINT/184994",
+     195
+    ],
+    [
+     14,
+     2040220366,
+     "ENERGY METER-3PH",
+     "D0",
+     1,
+     "Nos",
+     50,
+     "Suman",
+     "SELEC/3P-C-100A-CE",
+     1524
+    ],
+    [
+     15,
+     2040220371,
+     "MCB 16A 1P-6DS",
+     "D0",
+     6,
+     "Nos",
+     300,
+     "K.H TRADERS",
+     "C&S/CSMBS1C16",
+     99
+    ],
+    [
+     16,
+     2040220302,
+     "MCB-6A 230VAC SP",
+     "D1",
+     3,
+     "Nos",
+     150,
+     "K.H TRADERS",
+     "C&S/CSMBS1C6",
+     99
+    ]
+   ]
+  ],
+  "projects": [
+   {
+    "name": "DLS",
+    "status": "Completed",
+    "acts": [
+     [
+      1,
+      "Alternate change (trigger / start)",
+      "2026-01-13",
+      null,
+      "We are having higher rejection rate and quality issues in existing DLS make from Vaishno Tradelink."
+     ],
+     [
+      2,
+      "Receipt of Latest SOR/Drawing from Engg",
+      null,
+      null,
+      "AS per drawing specs started sourcing"
+     ],
+     [
+      3,
+      "Identify suitable & capable supplier",
+      "2026-02-15",
+      "2026-02-17",
+      "Started exploring new supplier"
+     ],
+     [
+      4,
+      "Shortlist suitable supplier as per SM Standards",
+      "2026-02-20",
+      "2026-02-20",
+      "Selected the standard part as per the drawing specifications"
+     ],
+     [
+      5,
+      "Share SOR & Float RFQ to shortlisted suppliers",
+      null,
+      null,
+      null
+     ],
+     [
+      6,
+      "Receipt of Technical Product datasheet & drawings as applicable",
+      "2026-02-25",
+      "2026-02-27",
+      "Received datasheet from supplier"
+     ],
+     [
+      7,
+      "Selection of suitable part from the product data sheet",
+      null,
+      null,
+      null
+     ],
+     [
+      8,
+      "Technical Discussion & finalisation of supplier",
+      "2026-02-27",
+      "2026-03-05",
+      "1. 3D Stp File 2. Type Test report 3. Fire Retardants Report/grade 4. RHOS Certification 5. IP Report 6. Reliability Report 7. Failure Rate Report Eng Team requested above mentioned documents"
+     ],
+     [
+      9,
+      "Receipt of commercial offer with detailed terms & conditions",
+      null,
+      null,
+      null
+     ],
+     [
+      10,
+      "Release Sample P.O. to supplier",
+      null,
+      null,
+      null
+     ],
+     [
+      11,
+      "Receipt of samples along with required supplier QA docs & reports",
+      null,
+      null,
+      null
+     ],
+     [
+      12,
+      "Bench level test",
+      "2026-03-09",
+      "2026-03-11",
+      "Engg Team Requested samples. We have submitted 2 samples"
+     ],
+     [
+      13,
+      "Technical Discussion & finalisation of supplier (Re-evaluation)",
+      null,
+      null,
+      null
+     ],
+     [
+      14,
+      "Handover sample to engineering for DV & DVVP",
+      "2026-03-27",
+      "2026-03-30",
+      "Engg Team Requested 20 samples for DV & DVVP"
+     ],
+     [
+      15,
+      "Receipt of revised samples",
+      null,
+      null,
+      null
+     ],
+     [
+      16,
+      "Validation of Sample & release validation Report",
+      "2026-05-07",
+      "2026-06-10",
+      "Delayed due to the wiring harness terminal change from U-type to fork-type."
+     ],
+     [
+      17,
+      "DVVP result",
+      null,
+      null,
+      null
+     ],
+     [
+      18,
+      "Prepare cost summary & Obtain Management approvals",
+      "2026-06-23",
+      "2026-06-29",
+      "In parallel, we have initiated the costing for SOP. The quotation was received on 29-06-2026, with a delay from the supplier."
+     ],
+     [
+      19,
+      "Release of ECN based on succesfull validation",
+      "2026-07-01",
+      "2026-08-27",
+      "During the ECN review, an MPN mismatch was identified. The supplier had initially shared the wrong MPN, which resulted in a one-week delay in receiving the correct MPN from the supplier on 11-08-2026. Subsequently, the Engineering team took additional time to complete the corrected drawings, which were finalized on 27-08-2026."
+     ],
+     [
+      20,
+      "Release of P.O. for Mass Production.",
+      "2026-08-28",
+      "2026-08-28",
+      "PO Released to Supplier"
+     ]
+    ]
+   },
+   {
+    "name": "UPS - Delta Sample",
+    "status": "Ongoing",
+    "acts": [
+     [
+      1,
+      "Alternate change (trigger / start)",
+      null,
+      null,
+      "Initiated alternate UPS evaluation to meet MQIS requirements."
+     ],
+     [
+      2,
+      "Receipt of Latest SOR/Drawing from Engg",
+      "2026-07-09",
+      "2026-07-09",
+      "SOR compliance and technical requirements to be verified."
+     ],
+     [
+      3,
+      "Identify suitable & capable supplier",
+      "2026-07-19",
+      "2026-07-25",
+      "Delta identified as an alternate UPS supplier."
+     ],
+     [
+      4,
+      "Shortlist suitable supplier as per SM Standards",
+      "2026-08-03",
+      "2026-08-02",
+      "Supplier shortlisted for technical evaluation."
+     ],
+     [
+      5,
+      "Share SOR & Float RFQ to shortlisted suppliers",
+      "2026-08-05",
+      "2026-08-06",
+      "SOR requirements shared for compliance confirmation."
+     ],
+     [
+      6,
+      "Receipt of Technical Product datasheet & drawings as applicable",
+      "2026-08-07",
+      "2026-08-07",
+      "Technical datasheet and compliance documents under review."
+     ],
+     [
+      7,
+      "Selection of suitable part from the product data sheet",
+      "2026-08-15",
+      "2026-08-18",
+      "1 KVA single-phase UPS considered for evaluation."
+     ],
+     [
+      8,
+      "Technical Discussion & finalisation of supplier",
+      "2026-08-22",
+      "2026-08-25",
+      "Technical discussions conducted on SNMP functionality and remote ON/OFF requirements."
+     ],
+     [
+      9,
+      "Receipt of commercial offer with detailed terms & conditions",
+      "2026-08-26",
+      "2026-08-27",
+      "Commercial offer to be reviewed against target cost."
+     ],
+     [
+      10,
+      "Release Sample P.O. to supplier",
+      "2026-08-28",
+      "2026-08-28",
+      "Sample PO status to be confirmed."
+     ],
+     [
+      11,
+      "Receipt of samples along with required supplier QA docs & reports",
+      "2026-08-07",
+      "2026-08-04",
+      "Sample receipt status to be confirmed."
+     ],
+     [
+      12,
+      "Bench level test",
+      "2026-09-20",
+      "2026-09-23",
+      "technical open points has pending with supplier. Supplier will come back by 15/10/2026"
+     ],
+     [
+      13,
+      "Bench level test-1.Supplier clarification on the observation (Required manual intervention to switch on Output)\n2. SOR Compliance",
+      "2026-09-30",
+      "2026-10-09",
+      "Delayed due to pending SNMP-related documents from the supplier. The supplier has committed to closing the pending points by 15-Oct-2026."
+     ],
+     [
+      14,
+      "Open points pending with supplier",
+      "2026-10-15",
+      null,
+      "Technical open points has pending with supplier."
+     ],
+     [
+      13,
+      "Technical Discussion & finalisation of supplier (Re-evaluation)",
+      null,
+      null,
+      null
+     ],
+     [
+      14,
+      "Handover sample to engineering for DV & DVVP",
+      null,
+      null,
+      null
+     ],
+     [
+      15,
+      "Receipt of revised samples",
+      null,
+      null,
+      null
+     ],
+     [
+      16,
+      "Validation of Sample & release validation Report",
+      null,
+      null,
+      null
+     ],
+     [
+      17,
+      "DVVP result",
+      null,
+      null,
+      null
+     ],
+     [
+      18,
+      "Prepare cost summary & Obtain Management approvals",
+      null,
+      null,
+      null
+     ],
+     [
+      19,
+      "Release of ECN based on succesfull validation",
+      null,
+      null,
+      null
+     ],
+     [
+      20,
+      "Release of P.O. for Mass Production.",
+      null,
+      null,
+      null
+     ]
+    ]
+   },
+   {
+    "name": "UPS - Numeric",
+    "status": "Ongoing",
+    "acts": [
+     [
+      1,
+      "Alternate change (trigger / start)",
+      null,
+      null,
+      null
+     ],
+     [
+      2,
+      "Receipt of Latest SOR/Drawing from Engg",
+      "2026-07-09",
+      "2026-07-09",
+      "Received SOR from Engg Team"
+     ],
+     [
+      3,
+      "Identify suitable & capable supplier",
+      "2026-07-19",
+      "2026-07-25",
+      "Supplier identified based on the SOR."
+     ],
+     [
+      4,
+      "Shortlist suitable supplier as per SM Standards",
+      "2026-08-03",
+      "2026-08-02",
+      "Shortlist delta make"
+     ],
+     [
+      5,
+      "Share SOR & Float RFQ to shortlisted suppliers",
+      "2026-08-06",
+      "2026-08-03",
+      "requested quote with delta make"
+     ],
+     [
+      6,
+      "Receipt of Technical Product datasheet & drawings as applicable",
+      "2026-08-07",
+      "2026-08-07",
+      "received datasheet from supplier"
+     ],
+     [
+      7,
+      "Selection of suitable part from the product data sheet",
+      "2026-08-15",
+      "2026-08-18",
+      null
+     ],
+     [
+      8,
+      "Technical Discussion & finalisation of supplier",
+      "2026-08-22",
+      "2026-08-25",
+      "Eng team requested one sample for bench level test"
+     ],
+     [
+      9,
+      "Receipt of commercial offer with detailed terms & conditions",
+      "2026-08-26",
+      "2026-08-27",
+      "Received quote from supplier"
+     ],
+     [
+      10,
+      "Release Sample P.O. to supplier",
+      "2026-08-28",
+      "2026-08-28",
+      "PO released to supplier"
+     ],
+     [
+      11,
+      "Receipt of samples along with required supplier QA docs & reports",
+      "2026-09-07",
+      "2026-09-10",
+      "received"
+     ],
+     [
+      12,
+      "Bench level test",
+      "2026-09-20",
+      "2026-09-23",
+      "technical open points has pending with supplier. Supplier will come back by 13/10/2026"
+     ],
+     [
+      13,
+      "bench level test- . SOR Compliance\n2. SNMP Configuration Documents",
+      "2026-09-30",
+      "2026-09-13",
+      "Supplier resolved the charging current issue (10A to 2A) and input voltage issue. Only SNMP configuration training and related documents are pending."
+     ],
+     [
+      14,
+      "Technical Open Points",
+      "2026-10-15",
+      "2026-10-30",
+      "1. Numeric team to provide SNMP configuration training to our team.\n2. All SNMP-related documents to be shared by tomorrow, 14-Oct-2026, especially the OID file.\nAll Open points closed. Validation under process"
+     ],
+     [
+      15,
+      "Technical Discussion & finalisation of supplier (Re-evaluation)",
+      null,
+      null,
+      null
+     ],
+     [
+      16,
+      "Handover sample to engineering for DV & DVVP",
+      null,
+      null,
+      null
+     ],
+     [
+      17,
+      "Receipt of revised samples",
+      null,
+      null,
+      null
+     ],
+     [
+      18,
+      "Validation of Sample & release validation Report",
+      null,
+      null,
+      null
+     ],
+     [
+      19,
+      "DVVP result",
+      null,
+      null,
+      null
+     ],
+     [
+      20,
+      "Prepare cost summary & Obtain Management approvals",
+      null,
+      null,
+      null
+     ],
+     [
+      19,
+      "Release of ECN based on succesfull validation",
+      null,
+      null,
+      null
+     ],
+     [
+      20,
+      "Release of P.O. for Mass Production.",
+      null,
+      null,
+      null
+     ]
+    ]
+   },
+   {
+    "name": "UPS - Hykon Make",
+    "status": "Ongoing",
+    "acts": [
+     [
+      1,
+      "Alternate change (trigger / start)",
+      null,
+      null,
+      null
+     ],
+     [
+      2,
+      "Receipt of Latest SOR/Drawing from Engg",
+      "2026-07-09",
+      "2026-07-09",
+      "Received SOR from Engg Team"
+     ],
+     [
+      3,
+      "Identify suitable & capable supplier",
+      "2026-07-19",
+      "2026-07-25",
+      "Supplier identified based on the SOR."
+     ],
+     [
+      4,
+      "Shortlist suitable supplier as per SM Standards",
+      "2026-08-03",
+      "2026-08-02",
+      "Shortlist delta make"
+     ],
+     [
+      5,
+      "Share SOR & Float RFQ to shortlisted suppliers",
+      "2026-08-05",
+      "2026-08-06",
+      "requested quote with delta make"
+     ],
+     [
+      6,
+      "Receipt of Technical Product datasheet & drawings as applicable",
+      "2026-08-07",
+      "2026-08-07",
+      "received datasheet from supplier"
+     ],
+     [
+      7,
+      "Selection of suitable part from the product data sheet",
+      "2026-08-15",
+      "2026-08-18",
+      null
+     ],
+     [
+      8,
+      "Technical Discussion & finalisation of supplier",
+      "2026-08-22",
+      "2026-08-25",
+      "Program Team did not approve the procurement because the price was too high.24-09-2026 supplier came down less price with 2 years warranty. "
+     ],
+     [
+      9,
+      "Receipt of commercial offer with detailed terms & conditions",
+      "2026-08-26",
+      "2026-09-10",
+      "quoatation receiuved"
+     ],
+     [
+      10,
+      "Release Sample P.O. to supplier",
+      "2026-09-20",
+      " 06-10-2026",
+      "PO release delayed due to internal processes."
+     ],
+     [
+      11,
+      "Receipt of samples along with required supplier QA docs & reports",
+      "2026-09-15",
+      "2026-10-24",
+      "Samples received"
+     ],
+     [
+      12,
+      "Bench level test",
+      "2026-10-28",
+      "2026-10-28",
+      "UPS installation and SNMP configaration has been done. Required Documents received from supplier. Pending SNMP configaration traning."
+     ],
+     [
+      13,
+      "Technical Discussion & finalisation of supplier (Re-evaluation)",
+      null,
+      null,
+      null
+     ],
+     [
+      14,
+      "Handover sample to engineering for DV & DVVP",
+      null,
+      null,
+      null
+     ],
+     [
+      15,
+      "Receipt of revised samples",
+      null,
+      null,
+      null
+     ],
+     [
+      16,
+      "Validation of Sample & release validation Report",
+      null,
+      null,
+      null
+     ],
+     [
+      17,
+      "DVVP result",
+      null,
+      null,
+      null
+     ],
+     [
+      18,
+      "Prepare cost summary & Obtain Management approvals",
+      null,
+      null,
+      null
+     ],
+     [
+      19,
+      "Release of ECN based on succesfull validation",
+      null,
+      null,
+      null
+     ],
+     [
+      20,
+      "Release of P.O. for Mass Production.",
+      null,
+      null,
+      null
+     ]
+    ]
+   },
+   {
+    "name": "Heater Add-on (Retrofitment)",
+    "status": "Completed",
+    "acts": [
+     [
+      1,
+      "Alternate change (trigger / start)",
+      null,
+      null,
+      null
+     ],
+     [
+      2,
+      "Receipt of Latest SOR/Drawing from Engg",
+      "2026-02-13",
+      "2026-02-13",
+      "Received SOR from Engineering Team."
+     ],
+     [
+      3,
+      "Identify suitable & capable supplier",
+      "2026-02-15",
+      "2026-02-16",
+      "Domestic source not available; supplier identified in China as per SOR."
+     ],
+     [
+      4,
+      "Shortlist suitable supplier as per SM Standards",
+      "2026-02-21",
+      "2026-02-21",
+      "Shortlisted suppliers/parts based on the provided links and datasheets."
+     ],
+     [
+      5,
+      "Share SOR & Float RFQ to shortlisted suppliers",
+      "2026-02-24",
+      "2026-02-25",
+      "Shortlisted suppliers/parts based on the provided links and datasheets."
+     ],
+     [
+      6,
+      "Receipt of Technical Product datasheet & drawings as applicable",
+      "2026-02-25",
+      "2026-02-25",
+      "Technical datasheet shared with the Engineering Team on the same day for review."
+     ],
+     [
+      7,
+      "Selection of suitable part from the product data sheet",
+      "2026-02-26",
+      "2026-02-27",
+      "Engineering Team selected the PTC heater for the application."
+     ],
+     [
+      8,
+      "Technical Discussion & finalisation of supplier",
+      null,
+      null,
+      null
+     ],
+     [
+      9,
+      "Receipt of commercial offer with detailed terms & conditions",
+      "2026-02-27",
+      "2026-02-27",
+      "Commercial quotation received on the same day."
+     ],
+     [
+      10,
+      "Release Sample P.O. to supplier",
+      "2026-03-01",
+      "2026-03-05",
+      "PO released to supplier"
+     ],
+     [
+      11,
+      "Receipt of samples along with required supplier QA docs & reports",
+      "2026-03-15",
+      "2026-03-20",
+      "Delayed due to customs clearance."
+     ],
+     [
+      12,
+      "Bench level test",
+      null,
+      null,
+      null
+     ],
+     [
+      13,
+      "Technical Discussion & finalisation of supplier (Re-evaluation)",
+      null,
+      null,
+      null
+     ],
+     [
+      14,
+      "Handover sample to engineering for DV & DVVP",
+      null,
+      null,
+      null
+     ],
+     [
+      15,
+      "Receipt of revised samples",
+      null,
+      null,
+      null
+     ],
+     [
+      16,
+      "Validation of Sample & release validation Report",
+      null,
+      null,
+      null
+     ],
+     [
+      17,
+      "DVVP result",
+      null,
+      null,
+      null
+     ],
+     [
+      18,
+      "Prepare cost summary & Obtain Management approvals",
+      null,
+      null,
+      null
+     ],
+     [
+      19,
+      "Release of ECN based on succesfull validation",
+      null,
+      "2026-08-13",
+      "ECN released"
+     ],
+     [
+      20,
+      "PRICE MAPPING AND PR ",
+      "2026-09-20",
+      "2026-10-10",
+      "Price mapping has been completed"
+     ],
+     [
+      21,
+      "Release of P.O. for Mass Production.",
+      "2026-10-20",
+      null,
+      "PR pending with FIELD Ops"
+     ]
+    ]
+   },
+   {
+    "name": "DC-UPS (Relay - Fuji Make)",
+    "status": "Ongoing",
+    "acts": [
+     [
+      1,
+      "Alternate change (trigger / start)",
+      "2026-07-07",
+      null,
+      "Received the requirement from the Engineering team."
+     ],
+     [
+      2,
+      "Receipt of Latest SOR/Drawing from Engg",
+      null,
+      null,
+      null
+     ],
+     [
+      3,
+      "Identify suitable & capable supplier",
+      "2026-07-10",
+      "2026-07-09",
+      "RFQ initiate to Fuji supplier"
+     ],
+     [
+      4,
+      "Shortlist suitable supplier as per SM Standards",
+      "2026-07-10",
+      "2026-07-10",
+      "Shortlisted suppliers/parts based on the provided links and datasheets."
+     ],
+     [
+      5,
+      "Share SOR & Float RFQ to shortlisted suppliers",
+      null,
+      null,
+      null
+     ],
+     [
+      6,
+      "Receipt of Technical Product datasheet & drawings as applicable",
+      null,
+      null,
+      null
+     ],
+     [
+      7,
+      "Selection of suitable part from the product data sheet",
+      null,
+      null,
+      null
+     ],
+     [
+      8,
+      "Technical Discussion & finalisation of supplier",
+      null,
+      null,
+      null
+     ],
+     [
+      9,
+      "Receipt of commercial offer with detailed terms & conditions",
+      "2026-07-10",
+      "2026-07-10",
+      "Commercial quotation"
+     ],
+     [
+      10,
+      "Release Sample P.O. to supplier",
+      "2026-07-20",
+      "2026-07-30",
+      "delay from engg team part confirmation. Part number creation and PR creation"
+     ],
+     [
+      11,
+      "Receipt of samples along with required supplier QA docs & reports",
+      "2026-07-15",
+      "2026-08-20",
+      "received samples and submitted to Eng Team"
+     ],
+     [
+      12,
+      "Bench level test",
+      null,
+      null,
+      null
+     ],
+     [
+      13,
+      "Technical Discussion & finalisation of supplier (Re-evaluation)",
+      null,
+      null,
+      null
+     ],
+     [
+      14,
+      "Handover sample to engineering for DV & DVVP",
+      null,
+      null,
+      null
+     ],
+     [
+      15,
+      "Receipt of revised samples",
+      null,
+      null,
+      null
+     ],
+     [
+      16,
+      "Validation of Sample & release validation Report",
+      null,
+      null,
+      null
+     ],
+     [
+      17,
+      "DVVP result",
+      null,
+      null,
+      null
+     ],
+     [
+      18,
+      "Prepare cost summary & Obtain Management approvals",
+      null,
+      null,
+      null
+     ],
+     [
+      19,
+      "Release of ECN based on succesfull validation",
+      null,
+      null,
+      null
+     ],
+     [
+      20,
+      "Release of P.O. for Mass Production.",
+      null,
+      null,
+      null
+     ]
+    ]
+   },
+   {
+    "name": "Hooter (Iota)",
+    "status": "Ongoing",
+    "acts": [
+     [
+      1,
+      "Alternate Change (Trigger / Start)",
+      "2025-11-03",
+      "2025-11-03",
+      "Initiated alternate sourcing due to repeated quality rejections and poor supplier response."
+     ],
+     [
+      2,
+      "Receipt of Latest SOR/Drawing from Engineering",
+      "2025-11-04",
+      "TBD",
+      "Technical details and datasheet shared with Engineering for feasibility review."
+     ],
+     [
+      3,
+      "Identify Suitable & Capable Supplier",
+      "2025-11-04",
+      "2025-11-07",
+      "IOTA Internationals identified as an alternate supplier for the 24V DC hooter."
+     ],
+     [
+      4,
+      "Shortlist Suitable Supplier as per SM Standards",
+      "2025-11-05",
+      "2025-11-25",
+      "IOTA sample qualified for DV; other alternate makes were also explored."
+     ],
+     [
+      5,
+      "Share SOR & Float RFQ to Shortlisted Suppliers",
+      "2025-11-05",
+      "TBD",
+      "Alternate supplier details and technical requirements shared; RFQ status not confirmed."
+     ],
+     [
+      6,
+      "Receipt of Technical Product Datasheet & Drawings",
+      "2025-11-07",
+      "2025-11-07",
+      "IOTA technical datasheet received and shared for Engineering review."
+     ],
+     [
+      7,
+      "Selection of Suitable Part from Product Datasheet",
+      "2025-11-10",
+      "2025-11-25",
+      "IOTA sample found suitable for DV, with minor tone variation."
+     ],
+     [
+      8,
+      "Technical Discussion & Finalisation of Supplier",
+      "2025-11-12",
+      "2025-11-19",
+      "Supplier confirmed limitations in tone customisation; further discussion required to match the existing buzzer tone."
+     ],
+     [
+      9,
+      "Receipt of Commercial Offer with Detailed Terms & Conditions",
+      "2025-11-14",
+      "TBD",
+      "Price details requested after initial sample qualification; commercial closure date not confirmed."
+     ],
+     [
+      10,
+      "Release Sample P.O. to Supplier",
+      "2025-11-17",
+      "2026-03-25",
+      "PR raised for IOTA SQR117 Slim hooter sample evaluation; PO release date not confirmed."
+     ],
+     [
+      11,
+      "Receipt of Samples along with Required Supplier QA Documents & Reports",
+      "2025-11-20",
+      "2026-04-15",
+      "20 samples received and GRN completed."
+     ],
+     [
+      12,
+      "Bench-Level Test",
+      "2025-11-24",
+      "2025-11-18",
+      "Initial sample reviewed; tone variation and customisation requirements discussed."
+     ],
+     [
+      13,
+      "Technical Discussion & Finalisation of Supplier (Re-evaluation)",
+      "2025-12-10",
+      "2026-08-18",
+      " alternate supplier evaluation initiated."
+     ],
+     [
+      14,
+      "Handover Sample to Engineering for DV & DVVP",
+      "2025-12-15",
+      "2026-04-15",
+      "Samples handed over for further evaluation and validation."
+     ],
+     [
+      15,
+      "Receipt of Revised Samples",
+      "2026-01-15",
+      "2026-04-01",
+      "Samples with connector and bracket modifications arranged; further alternate sample evaluation continued."
+     ],
+     [
+      16,
+      "Validation of Sample & Release Validation Report",
+      "2026-02-15",
+      "2026-08-18",
+      "IOTA validation failed. Alternate make identified; ENCORE sample submitted on 24-Sep-2026."
+     ],
+     [
+      17,
+      "DVVP Result",
+      "2026-02-20",
+      "TBD",
+      "IOTA validation failed. Alternate make evaluation is ongoing."
+     ],
+     [
+      18,
+      "Prepare Cost Summary & Obtain Management Approvals",
+      "2026-02-25",
+      "TBD",
+      null
+     ],
+     [
+      19,
+      "Release of ECN based on succesfull validation",
+      null,
+      null,
+      null
+     ],
+     [
+      20,
+      "Release of P.O. for Mass Production.",
+      null,
+      null,
+      null
+     ],
+     [
+      21,
+      "Submission of Sample with Red & Black Wire Polarity Identification",
+      "2026-10-12",
+      "2026-10-12",
+      "One sample submitted with red and black wires to identify positive and negative polarity."
+     ],
+     [
+      22,
+      "Engineering Review & Confirmation",
+      "2026-10-13",
+      "2026-10-26",
+      "Polarity issue solved. "
+     ],
+     [
+      23,
+      "Open point pending with supplier",
+      "2026-10-30",
+      "2026-10-26",
+      "1.2D and 3D drawings\n2.The hooter tone differs from our existing model. Please confirm whether the tone can be modified to match the existing hooter.\n "
+     ],
+     [
+      24,
+      "Requested tone modification",
+      "2026-10-30",
+      "2026-10-03",
+      "Supplier denied for tone modification."
+     ]
+    ]
+   },
+   {
+    "name": "Ethernet S/W",
+    "status": "Ongoing",
+    "acts": [
+     [
+      1,
+      "Receipt of Latest SOR/Drawing from Engineering",
+      "2026-07-13",
+      null,
+      "Existing ORing MPN IES-C1080 declared obsolete; alternate MPN IES-C1080-L suggested by supplier."
+     ],
+     [
+      2,
+      "Identify Suitable & Capable Supplier",
+      "2026-07-15",
+      "2026-07-13",
+      "Existing supplier ORing proposed the alternate model."
+     ],
+     [
+      3,
+      "Shortlist Suitable Supplier as per SM Standards",
+      "2026-07-16",
+      "2026-07-13",
+      "Two additional approved makes were identified in the drawing; Engineering clarification requested."
+     ],
+     [
+      4,
+      "Share SOR & Float RFQ to Shortlisted Suppliers",
+      "2026-07-17",
+      null,
+      "Alternate MPN evaluation initiated; RFQ status not mentioned in the email."
+     ],
+     [
+      5,
+      "Receipt of Technical Product Datasheet & Drawings",
+      "2026-07-20",
+      "2026-08-10",
+      "Datasheet received for alternate MPN IES-C1080-L."
+     ],
+     [
+      6,
+      "Selection of Suitable Part from Product Datasheet",
+      "2026-07-22",
+      null,
+      "Technical evaluation of alternate part initiated."
+     ],
+     [
+      7,
+      "Technical Discussion & Finalisation of Supplier",
+      "2026-07-24",
+      null,
+      "Engineering clarification and alternate MPN suitability under evaluation"
+     ],
+     [
+      8,
+      "Receipt of Commercial Offer with Detailed Terms & Conditions",
+      "2026-07-27",
+      null,
+      "Commercial offer status not mentioned in the email."
+     ],
+     [
+      9,
+      "Release Sample P.O. to Supplier",
+      "2026-07-29",
+      null,
+      "Five samples received for Part No. 2040220078."
+     ],
+     [
+      10,
+      "Receipt of Samples along with Required Supplier QA Documents & Reports",
+      "2026-08-10",
+      "2026-08-10",
+      "Validation initiated by the Engineering team."
+     ],
+     [
+      11,
+      "Bench-Level Test",
+      "2026-08-14",
+      "TBD",
+      "Input power connector location change identified; two new samples requested for DFA/DFS."
+     ],
+     [
+      12,
+      "Technical Discussion & Finalisation of Supplier (Re-evaluation)",
+      "2026-08-18",
+      "2026-09-30",
+      "Five samples submitted for validation; DV initiated by Engineering."
+     ],
+     [
+      13,
+      "Handover Sample to Engineering for DV & DVVP",
+      "2026-08-10",
+      "2026-08-10",
+      "Two new samples requested due to the input power connector location change."
+     ],
+     [
+      14,
+      "Receipt of Revised Samples",
+      "2026-10-02",
+      "TBD",
+      "DV sign-off shared; DFA/DFS activities required for the revised connector location."
+     ],
+     [
+      15,
+      "Validation of Sample & Release Validation Report",
+      "2026-09-25",
+      "2026-09-30",
+      "Electrical and software DV completed; mechanical DV and DVVP follow-up required."
+     ],
+     [
+      16,
+      "DVVP Result",
+      "2026-09-30",
+      "TBD",
+      "Cost summary and management approval status not confirmed in the email."
+     ],
+     [
+      17,
+      "Prepare Cost Summary & Obtain Management Approvals",
+      "2026-10-05",
+      "TBD",
+      "ECN 00796 approval list requested; ECN release process initiated."
+     ],
+     [
+      18,
+      "Release of ECN Based on Successful Validation",
+      "2026-10-07",
+      "2026-10-07",
+      "ECN APPROVED. PO Created"
+     ],
+     [
+      19,
+      "Release of PO for Mass Production",
+      "2026-10-19",
+      null,
+      null
+     ]
+    ]
+   },
+   {
+    "name": "Hitachi UPS",
+    "status": "Ongoing",
+    "acts": [
+     [
+      1,
+      "Alternate change trigger / start",
+      "2026-08-10",
+      "2026-08-10",
+      "Alternate UPS supplier identification and validation process initiated."
+     ],
+     [
+      2,
+      "Receipt of latest SOR/Drawing from Engineering",
+      "2026-08-14",
+      "TBD",
+      "Revised SOR requirements to be confirmed with Engineering."
+     ],
+     [
+      3,
+      "Identify suitable & capable supplier",
+      "2026-08-17",
+      "2026-09-24",
+      "Hitachi and alternate suppliers considered for UPS development."
+     ],
+     [
+      4,
+      "Shortlist suitable suppliers as per SUN Mobility standards",
+      "2026-08-19",
+      "2026-09-24",
+      "Suppliers shortlisted for technical evaluation and validation."
+     ],
+     [
+      5,
+      "Share SOR and float RFQ",
+      "2026-08-20",
+      "TBD",
+      "SOR requirements shared with suppliers for technical and commercial evaluation."
+     ],
+     [
+      6,
+      "Receipt of technical datasheet and drawings",
+      "2026-08-24",
+      "2026-08-31",
+      "Hitachi shared SNMP details; SOR compliance documents were pending."
+     ],
+     [
+      7,
+      "Selection of suitable part from datasheet",
+      "2026-08-26",
+      "2026-09-24",
+      "UPS model evaluated against technical requirements."
+     ],
+     [
+      8,
+      "Technical discussion and supplier finalisation",
+      "2026-08-28",
+      "2026-09-24",
+      "Technical issues and compliance requirements discussed with the supplier."
+     ],
+     [
+      9,
+      "Receipt of commercial offer with terms and conditions",
+      "2026-08-31",
+      "TBD",
+      "Commercial offer and final terms to be confirmed."
+     ],
+     [
+      10,
+      "Release of sample PO",
+      "2026-09-02",
+      "TBD",
+      "PO release dependent on technical and commercial closure."
+     ],
+     [
+      11,
+      "Receipt of samples with QA documents and reports",
+      "2026-09-04",
+      "TBD",
+      "SNMP card was committed for 01-Sep-2026 but was not received as committed."
+     ],
+     [
+      12,
+      "Bench-level test",
+      "2026-09-08",
+      "2026-09-09",
+      "UPS functionality and SNMP-related issues evaluated during technical follow-up."
+     ],
+     [
+      13,
+      "Bench-level test observations and SOR compliance",
+      "2026-09-10",
+      "2026-09-13",
+      "Remote ON/OFF, input voltage and charging current issues addressed. SNMP configuration training and documents remained pending."
+     ],
+     [
+      14,
+      "Technical discussion and supplier finalisation (re-evaluation)",
+      "2026-09-14",
+      "2026-09-30",
+      "Supplier not yet confirmed the TEST certificates timeline"
+     ],
+     [
+      15,
+      "PO Release for DV/DVVP",
+      "2026-10-08",
+      "2026-10-08",
+      "Price finalisation is pending. However, 5 nos. of samples have been requested from the supplier without releasing a PO for technical evaluation."
+     ],
+     [
+      16,
+      "Receipt of  samples",
+      "2026-10-25",
+      "2026-10-29",
+      "5 samples received but SNMP card not yet due  non stock unavailibuty. Supplier confirmed ETA by 03/10/26"
+     ],
+     [
+      17,
+      "Sample validation and release of validation report",
+      null,
+      null,
+      null
+     ],
+     [
+      18,
+      "DVVP result",
+      null,
+      null,
+      null
+     ],
+     [
+      19,
+      "Prepare cost summary and obtain management approval",
+      null,
+      null,
+      null
+     ],
+     [
+      20,
+      "Release ECN based on successful validation",
+      null,
+      null,
+      null
+     ],
+     [
+      21,
+      "Release PO for mass production",
+      null,
+      null,
+      null
+     ],
+     [
+      19,
+      "Release of ECN based on succesfull validation",
+      null,
+      null,
+      null
+     ],
+     [
+      20,
+      "Release of P.O. for Mass Production.",
+      null,
+      null,
+      null
+     ]
+    ]
+   }
+  ],
+  "fan": [
+   [
+    "DOCK FAN WITH CONNECTOR - MQIS  |  Landed Cost Comparison (per unit)",
+    null,
+    null,
+    null
+   ],
+   [
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "Cost Element",
+    "Existing Supplier (Import)",
+    "Alternate Supplier (Domestic)",
+    "Basis / Note"
+   ],
+   [
+    "Currency / INCO terms",
+    "US$ / FOB",
+    "INR / basis TBC",
+    "Confirm alternate price is delivered to SUN Mobility (FOR) and ex-GST"
+   ],
+   [
+    "Unit price (US$)",
+    5.5,
+    "–",
+    "From your sheet"
+   ],
+   [
+    "Exchange rate (₹ per US$)",
+    97,
+    "–",
+    "Implied by your sheet: ₹533.50 ÷ $5.50"
+   ],
+   [
+    "Unit price (₹)",
+    533.5,
+    636,
+    "Alternate: quoted unit price"
+   ],
+   [
+    "Freight (Air)",
+    128,
+    0,
+    "Existing ships by air (sea freight blank). Alternate freight assumed nil — confirm"
+   ],
+   [
+    "Insurance %",
+    0.0013,
+    "–",
+    "0.13% of (price + freight)"
+   ],
+   [
+    "Insurance (₹)",
+    0.86,
+    "–",
+    null
+   ],
+   [
+    "CIF value (₹)",
+    662.36,
+    "–",
+    "Price + freight + insurance"
+   ],
+   [
+    "BCD %",
+    0.1,
+    "–",
+    "Basic Customs Duty"
+   ],
+   [
+    "BCD (₹)",
+    66.24,
+    "–",
+    null
+   ],
+   [
+    "SWS % (on BCD)",
+    0.1,
+    "–",
+    "Social Welfare Surcharge — \"Cess\" in your sheet"
+   ],
+   [
+    "SWS (₹)",
+    6.62,
+    "–",
+    null
+   ],
+   [
+    "CHA / clearance / local freight (₹)",
+    0,
+    "–",
+    "Shown as nil in your sheet — real clearance cost is not zero; confirm"
+   ],
+   [
+    "LANDED COST PER UNIT (₹)",
+    735.22,
+    636,
+    "IGST excluded on both sides (input credit)"
+   ],
+   [
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "Comparison",
+    null,
+    null,
+    null
+   ],
+   [
+    "Saving per unit with alternate (₹)",
+    99.22,
+    null,
+    null
+   ],
+   [
+    "Saving %",
+    0.134952803242567,
+    null,
+    null
+   ],
+   [
+    "Annual volume (nos)",
+    18000,
+    "← enter annual requirement",
+    null
+   ],
+   [
+    "Annual saving (₹)",
+    1785960,
+    null,
+    null
+   ],
+   [
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "Before switching — confirm (not in your sheet)",
+    null,
+    null,
+    null
+   ],
+   [
+    "Item",
+    "Existing",
+    "Alternate",
+    null
+   ],
+   [
+    "Make / MPN (same spec?)",
+    "D12038V24HB-R-RD",
+    "D12038V24HB-R-RD",
+    null
+   ],
+   [
+    "Lead time (weeks)",
+    8,
+    4,
+    null
+   ],
+   [
+    "MOQ",
+    null,
+    null,
+    null
+   ],
+   [
+    "Warranty",
+    "1 year from the date of Invoice",
+    "Not confirmed",
+    null
+   ],
+   [
+    "Engineering validation / approval",
+    null,
+    null,
+    null
+   ],
+   [
+    "Payment terms",
+    " 30% advance of basic along with PO and 70% with full taxes before the shipment date",
+    "50% advance along with PO/50% against material readiness",
+    null
+   ]
+  ],
+  "teknic": [
+   [
+    "Emergency Switch Set — Domestic Source Change Comparison (per unit / per station)",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "Part No.",
+    "Part Name",
+    "Make",
+    "MPN",
+    "BOM / Station",
+    "Existing Supplier",
+    "Alternate Supplier",
+    "Existing Unit Price (₹)",
+    "Quoted Unit Price (₹)",
+    "Saving / Unit (₹)",
+    "Saving %",
+    "Saving / Station (₹)"
+   ],
+   [
+    2040220153,
+    "EMERGENCY SWITCH",
+    "TEKNIC",
+    "2PSML411",
+    1,
+    "Krushi Solutions",
+    "Teknic",
+    307,
+    298.2,
+    8.80000000000001,
+    0.0286644951140066,
+    8.80000000000001
+   ],
+   [
+    2040220169,
+    "EMERGENCY SWITCH COVER",
+    "TEKNIC",
+    "2PAM7EH",
+    1,
+    "Krushi Solutions",
+    "Teknic",
+    103,
+    100.1,
+    2.90000000000001,
+    0.0281553398058253,
+    2.90000000000001
+   ],
+   [
+    2040220170,
+    "EMERGENCY SW WARNING PLATE",
+    "TEKNIC",
+    "LEGEND PLATE DIA 60MM YELLOW WITH BLACK CHARACTERS FOR EMERGENCY STOP",
+    1,
+    "Krushi Solutions",
+    "Teknic",
+    23,
+    22.4,
+    0.600000000000001,
+    0.0260869565217392,
+    0.600000000000001
+   ],
+   [
+    "TOTAL PER STATION",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    433,
+    420.7,
+    null,
+    0.0284064665127021,
+    12.3
+   ],
+   [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "Stations per year",
+    2000,
+    "← enter annual station volume",
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    "Annual saving (₹)",
+    24600,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ],
+   [
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null,
+    null
+   ]
+  ]
+ }
+}
