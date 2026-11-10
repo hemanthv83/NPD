@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-09T22:20:00",
+ "savedAt": "2026-11-10T06:19:22",
  "data": {
   "mqis": [
    [
@@ -2277,6 +2277,152 @@
       null
      ]
     ]
+   },
+   {
+    "name": "IMCU",
+    "status": "Ongoing",
+    "acts": [
+     [
+      1,
+      "Alternate change (trigger / start)",
+      "2026-11-10",
+      null,
+      null
+     ],
+     [
+      2,
+      "Receipt of Latest SOR/Drawing from Engg",
+      null,
+      null,
+      null
+     ],
+     [
+      3,
+      "Identify suitable & capable supplier",
+      null,
+      null,
+      null
+     ],
+     [
+      4,
+      "Shortlist suitable supplier as per SM Standards",
+      null,
+      null,
+      null
+     ],
+     [
+      5,
+      "Share SOR & Float RFQ to shortlisted suppliers",
+      null,
+      null,
+      null
+     ],
+     [
+      6,
+      "Receipt of Technical Product datasheet & drawings as applicable",
+      null,
+      null,
+      null
+     ],
+     [
+      7,
+      "Selection of suitable part from the product data sheet",
+      null,
+      null,
+      null
+     ],
+     [
+      8,
+      "Technical Discussion & finalisation of supplier",
+      null,
+      null,
+      null
+     ],
+     [
+      9,
+      "Receipt of commercial offer with detailed terms & conditions",
+      null,
+      null,
+      null
+     ],
+     [
+      10,
+      "Release Sample P.O. to supplier",
+      null,
+      null,
+      null
+     ],
+     [
+      11,
+      "Receipt of samples along with required supplier QA docs & reports",
+      null,
+      null,
+      null
+     ],
+     [
+      12,
+      "Bench level test",
+      null,
+      null,
+      null
+     ],
+     [
+      13,
+      "Technical Discussion & finalisation of supplier (Re-evaluation)",
+      null,
+      null,
+      null
+     ],
+     [
+      14,
+      "Handover sample to engineering for DV & DVVP",
+      null,
+      null,
+      null
+     ],
+     [
+      15,
+      "Receipt of revised samples",
+      null,
+      null,
+      null
+     ],
+     [
+      16,
+      "Validation of Sample & release validation Report",
+      null,
+      null,
+      null
+     ],
+     [
+      17,
+      "DVVP result",
+      null,
+      null,
+      null
+     ],
+     [
+      18,
+      "Prepare cost summary & Obtain Management approvals",
+      null,
+      null,
+      null
+     ],
+     [
+      19,
+      "Release of ECN based on succesfull validation",
+      null,
+      null,
+      null
+     ],
+     [
+      20,
+      "Release of P.O. for Mass Production.",
+      null,
+      null,
+      null
+     ]
+    ]
    }
   ],
   "fan": [
@@ -2662,6 +2808,68 @@
     null,
     null
    ]
+  ],
+  "tk": {
+   "title": "Emergency Switch Set — Domestic Source Change Comparison (per unit / per station)",
+   "parts": [
+    {
+     "pn": 2040220153,
+     "name": "EMERGENCY SWITCH",
+     "make": "TEKNIC",
+     "mpn": "2PSML411",
+     "bom": 1.0,
+     "exs": "Krushi Solutions",
+     "alts": "Teknic",
+     "exp": 307.0,
+     "qp": 298.2
+    },
+    {
+     "pn": 2040220169,
+     "name": "EMERGENCY SWITCH COVER",
+     "make": "TEKNIC",
+     "mpn": "2PAM7EH",
+     "bom": 1.0,
+     "exs": "Krushi Solutions",
+     "alts": "Teknic",
+     "exp": 103.0,
+     "qp": 100.1
+    },
+    {
+     "pn": 2040220170,
+     "name": "EMERGENCY SW WARNING PLATE",
+     "make": "TEKNIC",
+     "mpn": "LEGEND PLATE DIA 60MM YELLOW WITH BLACK CHARACTERS FOR EMERGENCY STOP",
+     "bom": 1.0,
+     "exs": "Krushi Solutions",
+     "alts": "Teknic",
+     "exp": 23.0,
+     "qp": 22.4
+    }
+   ],
+   "stations": 2000.0
+  },
+  "fanExtra": [],
+  "stdActs": [
+   "Alternate change (trigger / start)",
+   "Receipt of Latest SOR/Drawing from Engineering",
+   "Share SOR & Float RFQ to Shortlisted Suppliers",
+   "Receipt of Quotation & Technical Compliance",
+   "Technical Evaluation & Shortlisting (Engineering)",
+   "Commercial Negotiation & Finalisation",
+   "Sample PO Release",
+   "Sample Receipt",
+   "Sample Inspection (Quality)",
+   "Sample Validation (Engineering)",
+   "Field Trial",
+   "Field Trial Report & Approval",
+   "PPAP / Documentation",
+   "Vendor Code Creation",
+   "Part Code Creation / BOM Update",
+   "Pilot Lot PO",
+   "Pilot Lot Receipt & Inspection",
+   "Production Approval (Engg + Quality)",
+   "Bulk PO Release",
+   "Closure & Handover to Regular Buyer"
   ]
  }
 }
