@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-11T13:11:14",
+ "savedAt": "2026-11-11T13:13:51",
  "data": {
   "mqis": [
    [
@@ -1431,7 +1431,7 @@
       10,
       "Release Sample P.O. to supplier",
       "2026-09-20",
-      " 06-10-2026",
+      null,
       "PO release delayed due to internal processes."
      ],
      [
@@ -1479,7 +1479,7 @@
      [
       17,
       "DVVP result",
-      null,
+      "2026-11-20",
       null,
       null
      ],
