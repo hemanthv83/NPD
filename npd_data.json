@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-11T05:05:37",
+ "savedAt": "2026-11-11T05:07:07",
  "data": {
   "mqis": [
    [
@@ -1299,7 +1299,7 @@
       14,
       "Technical Open Points",
       "2026-10-15",
-      "2026-11-11",
+      null,
       "Open points pending with supplier"
      ],
      [
