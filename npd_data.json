@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-11T12:11:21",
+ "savedAt": "2026-11-11T12:14:21",
  "data": {
   "mqis": [
    [
@@ -2232,7 +2232,7 @@
       "Receipt of  samples",
       "2026-10-25",
       null,
-      "Samples received; however, the supplier has not yet confirmed the ETA for the test certificates."
+      "Pending technical open points will be closed before 16/11/2026, and the test certificates are expected to be submitted by 15/01/2027."
      ],
      [
       17,
