@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-12T04:36:12",
+ "savedAt": "2026-11-12T04:54:24",
  "data": {
   "mqis": [
    [
@@ -2292,93 +2292,93 @@
      [
       1,
       "Alternate change (trigger / start)",
-      null,
-      null,
-      null
+      "2026-08-13",
+      "2026-08-13",
+      "Atandra Energy introduced KRYKARD UPS products for evaluation."
      ],
      [
       2,
       "Receipt of Latest SOR/Drawing from Engg",
       null,
-      null,
-      null
+      "2026-08-20",
+      "SOR shared with the supplier for technical and commercial evaluation."
      ],
      [
       3,
       "Identify suitable & capable supplier",
-      null,
-      null,
-      null
+      "2026-08-13",
+      "2026-08-13",
+      "Atandra Energy identified as a potential UPS supplier.\n"
      ],
      [
       4,
       "Shortlist suitable supplier as per SM Standards",
-      null,
-      null,
-      null
+      "2026-08-20",
+      "2026-08-20",
+      "Supplier shortlisted for further technical and commercial evaluation."
      ],
      [
       5,
       "Share SOR & Float RFQ to shortlisted suppliers",
-      null,
-      null,
-      null
+      "2026-08-20",
+      "2026-08-20",
+      "SOR shared; supplier requested to submit quotation. Monthly requirement: 250 Nos."
      ],
      [
       6,
       "Receipt of Technical Product datasheet & drawings as applicable",
-      null,
-      null,
-      null
+      "2026-08-23",
+      "2026-08-24",
+      "\tRevised commercial offer and technical datasheet received. Supplier confirmed offer updated as per SOR requirements."
      ],
      [
       7,
       "Selection of suitable part from the product data sheet",
-      null,
-      null,
-      null
+      "2026-08-24",
+      "2026-08-24",
+      "\tUPS model considered for further evaluation based on revised offer and technical datasheet."
      ],
      [
       8,
       "Technical Discussion & finalisation of supplier",
-      null,
-      null,
-      null
+      "2026-08-24",
+      "2026-08-26",
+      "Technical discussion conducted. Revised pricing, datasheet, SOR compliance and sample arrangement discussed."
      ],
      [
       9,
       "Receipt of commercial offer with detailed terms & conditions",
-      null,
-      null,
-      null
+      "2026-09-01",
+      "2026-09-24",
+      "\tRevised commercial offer received from Atandra Energy."
      ],
      [
       10,
       "Release Sample P.O. to supplier",
-      null,
-      null,
-      null
+      "2026-10-10",
+      "2026-10-10",
+      "We requested the FOC sample for bench level test"
      ],
      [
       11,
       "Receipt of samples along with required supplier QA docs & reports",
-      null,
-      null,
-      null
+      "2026-10-15",
+      "2026-10-14",
+      "Supplier confirmed demo UPS dispatch by 09-Oct, with expected delivery on 12/13-Oct."
      ],
      [
       12,
       "Bench level test",
-      null,
-      null,
-      null
+      "2026-10-25",
+      "2026-10-22",
+      "\tSNMP configuration completed. Further technical evaluation and document closure required."
      ],
      [
       13,
       "Technical Discussion & finalisation of supplier (Re-evaluation)",
+      "2026-10-28",
       null,
-      null,
-      null
+      "\tSupplier visited SUN Mobility. SOR completion, SNMP configuration procedure, OID/MIB documents and certificates discussed."
      ],
      [
       14,
