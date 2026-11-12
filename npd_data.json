@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-11T13:13:51",
+ "savedAt": "2026-11-12T04:36:12",
  "data": {
   "mqis": [
    [
@@ -2279,6 +2279,159 @@
      [
       20,
       "Release of P.O. for Mass Production.",
+      null,
+      null,
+      null
+     ]
+    ]
+   },
+   {
+    "name": "UPS-KRYKARD(ATANDRA ENERGY",
+    "status": "Ongoing",
+    "acts": [
+     [
+      1,
+      "Alternate change (trigger / start)",
+      null,
+      null,
+      null
+     ],
+     [
+      2,
+      "Receipt of Latest SOR/Drawing from Engg",
+      null,
+      null,
+      null
+     ],
+     [
+      3,
+      "Identify suitable & capable supplier",
+      null,
+      null,
+      null
+     ],
+     [
+      4,
+      "Shortlist suitable supplier as per SM Standards",
+      null,
+      null,
+      null
+     ],
+     [
+      5,
+      "Share SOR & Float RFQ to shortlisted suppliers",
+      null,
+      null,
+      null
+     ],
+     [
+      6,
+      "Receipt of Technical Product datasheet & drawings as applicable",
+      null,
+      null,
+      null
+     ],
+     [
+      7,
+      "Selection of suitable part from the product data sheet",
+      null,
+      null,
+      null
+     ],
+     [
+      8,
+      "Technical Discussion & finalisation of supplier",
+      null,
+      null,
+      null
+     ],
+     [
+      9,
+      "Receipt of commercial offer with detailed terms & conditions",
+      null,
+      null,
+      null
+     ],
+     [
+      10,
+      "Release Sample P.O. to supplier",
+      null,
+      null,
+      null
+     ],
+     [
+      11,
+      "Receipt of samples along with required supplier QA docs & reports",
+      null,
+      null,
+      null
+     ],
+     [
+      12,
+      "Bench level test",
+      null,
+      null,
+      null
+     ],
+     [
+      13,
+      "Technical Discussion & finalisation of supplier (Re-evaluation)",
+      null,
+      null,
+      null
+     ],
+     [
+      14,
+      "Handover sample to engineering for DV & DVVP",
+      null,
+      null,
+      null
+     ],
+     [
+      15,
+      "Receipt of revised samples",
+      null,
+      null,
+      null
+     ],
+     [
+      16,
+      "Validation of Sample & release validation Report",
+      null,
+      null,
+      null
+     ],
+     [
+      17,
+      "DVVP result",
+      null,
+      null,
+      null
+     ],
+     [
+      18,
+      "Prepare cost summary & Obtain Management approvals",
+      null,
+      null,
+      null
+     ],
+     [
+      19,
+      "Release of ECN based on succesfull validation",
+      null,
+      null,
+      null
+     ],
+     [
+      20,
+      "Release of P.O. for Mass Production.",
+      null,
+      null,
+      null
+     ],
+     [
+      21,
+      "Material received",
       null,
       null,
       null
