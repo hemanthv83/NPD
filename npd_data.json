@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-12T09:09:09",
+ "savedAt": "2026-11-12T09:32:55",
  "data": {
   "mqis": [
    [
@@ -1140,7 +1140,7 @@
       "Open points pending with supplier",
       "2026-10-15",
       null,
-      "Technical open points has pending with supplier."
+      "Technical open points are still pending with the supplier. Two additional open points were raised again on 26-Oct-2026. Although the supplier has provided clarifications, the points are yet to be cleared. The supplier is scheduled to visit on 13-Nov-2026 to discuss and close the pending points."
      ],
      [
       13,
