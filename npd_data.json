@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-12T04:54:24",
+ "savedAt": "2026-11-12T09:04:45",
  "data": {
   "mqis": [
    [
@@ -1300,7 +1300,7 @@
       "Technical Open Points",
       "2026-10-15",
       null,
-      "Open points pending with supplier"
+      "Pending technical open points will be closed before 16/11/2026, and the test certificates are expected to be submitted by 15/01/2027."
      ],
      [
       15,
