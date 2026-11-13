@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-13T10:09:18",
+ "savedAt": "2026-11-13T11:07:34",
  "data": {
   "mqis": [
    [
@@ -2887,20 +2887,24 @@
   ],
   "meta": {
    "acts": {
-    "custom": {},
+    "custom": {
+     "x_new_column": "text"
+    },
     "labels": {
      "step": "Step",
      "activity": "Activity",
      "plan": "Plan Date",
      "actual": "Actual Date",
-     "remarks": "Remarks"
+     "remarks": "Remarks",
+     "x_new_column": "New column"
     },
     "order": [
      "step",
      "activity",
      "plan",
      "actual",
-     "remarks"
+     "remarks",
+     "x_new_column"
     ],
     "renumber": true,
     "hidden": [
