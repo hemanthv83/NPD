@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-13T06:43:31",
+ "savedAt": "2026-11-13T06:58:02",
  "data": {
   "mqis": [
    [
@@ -2378,7 +2378,7 @@
       "Technical Discussion & finalisation of supplier (Re-evaluation)",
       "2026-10-28",
       null,
-      "\tSupplier visited SUN Mobility. SOR completion, SNMP configuration procedure, OID/MIB documents and certificates discussed."
+      "Open points pending with supplier.  1.SOR compliance document submission. 2.\tCompliance certificates (Safety & EMI/EMC).\n3.\tSNMP Configuration SOP.\n"
      ],
      [
       14,
