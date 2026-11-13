@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-13T10:09:17",
+ "savedAt": "2026-11-13T10:09:18",
  "data": {
   "mqis": [
    [
@@ -2904,7 +2904,8 @@
     ],
     "renumber": true,
     "hidden": [
-     "step"
+     "step",
+     "activity"
     ]
    }
   }
