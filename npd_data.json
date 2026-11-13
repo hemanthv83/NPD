@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-13T06:58:02",
+ "savedAt": "2026-11-13T09:05:46",
  "data": {
   "mqis": [
    [
@@ -1278,8 +1278,8 @@
       11,
       "Receipt of samples along with required supplier QA docs & reports",
       "2026-09-07",
-      "2026-09-10",
-      "received"
+      "2026-10-25",
+      "UPS received on 07-09-2026 but, SNMP card delayed received on 25-10-2026"
      ],
      [
       12,
@@ -1290,7 +1290,7 @@
      ],
      [
       13,
-      "bench level test- . SOR Compliance\n2. SNMP Configuration Documents",
+      "bench level test",
       "2026-09-30",
       "2026-09-13",
       "Supplier resolved the charging current issue (10A to 2A) and input voltage issue. Only SNMP configuration training and related documents are pending."
