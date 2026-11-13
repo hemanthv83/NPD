@@ -8,6 +8,7 @@ upload the master Excel or a JSON backup, edit in the app, then download the upd
 from __future__ import annotations
 
 import copy
+import hashlib
 import io
 import json
 import os
@@ -1346,297 +1347,225 @@ def _finish(spec, recs, structural, msg):
     return True
 
 
-def _apply_editor(spec, ek):
-    """Auto-save: called by Streamlit on every change in the table."""
-    state = st.session_state.get(ek) or {}
+# ----------------------------------------------------------------------------------------------
+# Excel-style grid (jspreadsheet CE, MIT licence) as a Streamlit component:
+# right-click insert/delete/rename, drag rows & columns, Ctrl+Z / Ctrl+Y undo-redo, copy-paste from Excel,
+# auto-save of every change. The component's HTML is written at start-up, so the app stays one file.
+# ----------------------------------------------------------------------------------------------
+GRID_HTML = r"""<!doctype html><html><head><meta charset="utf-8">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsuites@5.4.6/dist/jsuites.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.4/dist/jspreadsheet.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Icons&display=block">
+<script src="https://cdn.jsdelivr.net/npm/jsuites@5.4.6/dist/jsuites.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspreadsheet-ce@4.13.4/dist/index.js"></script>
+<style>
+ body{margin:0;font-family:"Segoe UI",Arial,sans-serif;font-size:13px;color:#18222F;background:#fff}
+ #bar{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px 2px 8px}
+ #bar button{font:600 12px "Segoe UI",Arial;border:1px solid #D8DFE8;background:#F3F5F8;color:#18222F;border-radius:6px;padding:5px 10px;cursor:pointer}
+ #bar button:hover{background:#DCEBF5;border-color:#0B5C8A}
+ #bar .sep{width:1px;height:20px;background:#D8DFE8;margin:0 4px}
+ #st{margin-left:auto;font-size:12px;color:#5D6B7C}
+ #st.err{color:#C2372D;font-weight:600}
+ #hint{font-size:11.5px;color:#5D6B7C;padding:0 2px 6px}
+ .jexcel > thead > tr > td{background:#1F4E78 !important;color:#fff !important;font-weight:600;border-color:#3d6a93 !important}
+ .jexcel > tbody > tr > td:first-child{background:#EEF2F7}
+ .jexcel > tbody > tr > td{font-size:12.5px}
+ .jexcel > tbody > tr > td.readonly{color:#5D6B7C;background:#FAFBFC}
+ .jexcel_content{border:1px solid #D8DFE8}
+</style></head><body>
+<div id="bar">
+ <button id="b-undo" title="Ctrl+Z">↶ Undo</button><button id="b-redo" title="Ctrl+Y">↷ Redo</button><span class="sep"></span>
+ <button id="b-rowa" title="Insert a row above the selected cell">+ Row above</button><button id="b-rowb" title="Insert a row below the selected cell">+ Row below</button>
+ <button id="b-coll" title="Insert a column left of the selected cell">+ Column left</button><button id="b-colr" title="Insert a column right of the selected cell">+ Column right</button>
+ <button id="b-ren" style="display:none">Renumber</button><span id="st"></span></div>
+<div id="hint">Right-click a cell or a column header to insert, delete or rename. Drag a row number or a header to move it. Double-click a header to rename. Changes save automatically.</div>
+<div id="sheet"></div>
+<script>
+const post=(type,o)=>window.parent.postMessage(Object.assign({isStreamlitMessage:true,type:type},o||{}),"*");
+let table=null, rev=null, timer=null, args=null, sending=false;
+const $=id=>document.getElementById(id);
+function height(){post("streamlit:setFrameHeight",{height:document.body.scrollHeight+8});}
+function status(t,err){const s=$("st");s.textContent=t||"";s.className=err?"err":"";}
+let lastSel=null;
+function sel(){return lastSel;}
+function payload(){const cols=table.options.columns;return{rev:rev,nonce:Date.now()+"-"+Math.random(),headers:table.getHeaders(true),
+  ids:cols.map(c=>c.name||null),data:table.getData(false)};}
+function changed(){if(table&&table.ignoreEvents)return;status("Saving…");clearTimeout(timer);
+  timer=setTimeout(()=>{post("streamlit:setComponentValue",{value:payload(),dataType:"json"});},700);}
+function isLocked(i){const c=table.options.columns[i];return c&&c.name&&(c.locked||String(c.name).startsWith("__comp_"));}
+function renumber(){if(!args||!args.renumber)return;const ci=table.options.columns.findIndex(c=>c.name===args.renumber);if(ci<0)return;
+  for(let r=0;r<table.rows.length;r++)table.setValueFromCoords(ci,r,r+1,true);changed();}
+function updateComputed(a){if(!table||!a.computed)return;const cols=table.options.columns;table.ignoreEvents=true;table.ignoreHistory=true;
+  try{a.computed.forEach((row,r)=>{if(r>=table.rows.length)return;cols.forEach((c,ci)=>{if(c.name&&String(c.name).startsWith("__comp_")){
+   const v=row[String(c.name).slice(7)];table.setValueFromCoords(ci,r,v==null?"":v,true);}});});}
+  finally{table.ignoreEvents=false;table.ignoreHistory=false;}}
+function build(a){lastSel=null;const el=$("sheet");if(table){try{jspreadsheet.destroy(el,true);}catch(e){}table=null;}el.innerHTML="";
+  table=jspreadsheet(el,{data:a.data.length?a.data:[a.columns.map(()=>"")],columns:a.columns,tableOverflow:true,
+   tableHeight:a.height+"px",tableWidth:(document.body.clientWidth-4)+"px",rowDrag:true,columnDrag:true,columnSorting:false,
+   allowInsertRow:true,allowDeleteRow:true,allowInsertColumn:true,allowDeleteColumn:true,allowRenameColumn:true,
+   allowManualInsertRow:true,allowManualInsertColumn:true,wordWrap:false,
+   onselection:(el,x1,y1,x2,y2)=>{lastSel={x1:+Math.min(x1,x2),y1:+Math.min(y1,y2),x2:+Math.max(x1,x2),y2:+Math.max(y1,y2)};},
+   onbeforedeletecolumn:(el,col,num)=>{for(let i=col;i<col+num;i++){if(isLocked(i)){status("Built-in columns cannot be deleted. You can rename or move them.",true);return false;}}},
+   onbeforechange:(el,cell,x,y,v)=>{if(isLocked(+x)&&String(table.options.columns[+x].name).startsWith("__comp_"))return false;},
+   onchange:changed,oninsertrow:changed,ondeleterow:changed,oninsertcolumn:changed,ondeletecolumn:changed,onmoverow:changed,
+   onmovecolumn:changed,onchangeheader:changed,onundo:changed,onredo:changed,onpaste:changed,onsort:changed});
+  $("b-ren").style.display=a.renumber?"":"none";}
+$("b-undo").onclick=()=>{table&&table.undo();};$("b-redo").onclick=()=>{table&&table.redo();};
+$("b-rowa").onclick=()=>{if(!table)return;const s=sel();table.insertRow(1,s?s.y1:0,true);};
+$("b-rowb").onclick=()=>{if(!table)return;const s=sel();table.insertRow(1,s?s.y2:table.rows.length-1,false);};
+$("b-coll").onclick=()=>{if(!table)return;const s=sel();table.insertColumn(1,s?s.x1:0,true,{title:"New column",type:"text",width:130});};
+$("b-colr").onclick=()=>{if(!table)return;const s=sel();table.insertColumn(1,s?s.x2:table.options.columns.length-1,false,{title:"New column",type:"text",width:130});};
+$("b-ren").onclick=renumber;
+window.addEventListener("message",e=>{const d=e.data;if(!d||d.type!=="streamlit:render")return;args=d.args;
+  if(typeof jspreadsheet==="undefined"){status("Spreadsheet library could not load (no internet?).",true);height();return;}
+  if(!table||args.rev!==rev){build(args);rev=args.rev;}else{updateComputed(args);}
+  if(args.status)status(args.status,args.status_err);else if($("st").textContent==="Saving…")status("Saved");height();});
+window.addEventListener("resize",height);
+post("streamlit:componentReady",{apiVersion:1});
+</script></body></html>"""
+
+_GRID_FN = None
+
+
+def _grid_component():
+    global _GRID_FN
+    if _GRID_FN is None:
+        import tempfile
+        import streamlit.components.v1 as components
+        folder = os.path.join(tempfile.gettempdir(), "npd_excel_grid")
+        os.makedirs(folder, exist_ok=True)
+        with open(os.path.join(folder, "index.html"), "w", encoding="utf-8") as fh:
+            fh.write(GRID_HTML)
+        _GRID_FN = components.declare_component("npd_excel_grid", path=folder)
+    return _GRID_FN
+
+
+def _cellval(v, typ):
+    if blank(v):
+        return ""
+    if typ == "date":
+        dd = to_date(v)
+        return dd.isoformat() if dd else str(v)
+    if typ == "number":
+        n = num(v)
+        return n if n is not None else str(v)
+    return v
+
+
+def _grid_build(spec, computed=None, dropdowns=None):
     d = D()
     t = spec["t"]
-    m = tmeta(d, t)
-    lab2id = {m["labels"][c]: c for c in m["order"]}
-    recs = spec["get"]()
-    edited = state.get("edited_rows") or {}
-    for idx, ch in edited.items():
-        i = int(idx)
-        if i < len(recs):
-            for lab, v in ch.items():
-                cid = lab2id.get(lab)
-                if cid:
-                    recs[i][cid] = _from_cell(v, _ctype(m, t, cid))
-    deleted = sorted((int(i) for i in (state.get("deleted_rows") or [])), reverse=True)
-    for i in deleted:
-        if i < len(recs):
-            recs.pop(i)
-    added = 0
-    for a in state.get("added_rows") or []:
-        rec = {}
-        for lab, v in a.items():
-            cid = lab2id.get(lab)
-            if cid:
-                rec[cid] = _from_cell(v, _ctype(m, t, cid))
-        if any(not blank(v) for v in rec.values()):
-            recs.append(rec)
-            added += 1
-    if not (edited or deleted or added):
-        return  # e.g. an empty new row: keep it on screen until something is typed
-    what = "edited" if edited and not (deleted or added) else "rows added/removed" if not edited else "updated"
-    _finish(spec, recs, bool(deleted or added), f"{TABLE_DEFS[t]['title'].capitalize()} {what}")
-
-
-def _row_op(spec, op):
-    recs = spec["get"]()
-    sk = f"rowsel_{spec['key']}"
-    i = min(st.session_state.get(sk, 0) or 0, max(len(recs) - 1, 0))
-    t = spec["t"]
-    new = i
-    if op == "add_first" or not recs:
-        recs.append({})
-        new = len(recs) - 1
-    elif op == "up" and i > 0:
-        recs[i - 1], recs[i] = recs[i], recs[i - 1]
-        new = i - 1
-    elif op == "down" and i < len(recs) - 1:
-        recs[i + 1], recs[i] = recs[i], recs[i + 1]
-        new = i + 1
-    elif op == "top":
-        recs.insert(0, recs.pop(i))
-        new = 0
-    elif op == "bottom":
-        recs.append(recs.pop(i))
-        new = len(recs) - 1
-    elif op == "goto":
-        target = int(st.session_state.get(f"goto_{spec['key']}", i + 1) or 1) - 1
-        target = max(0, min(target, len(recs) - 1))
-        recs.insert(target, recs.pop(i))
-        new = target
-    elif op == "above":
-        recs.insert(i, {})
-        new = i
-    elif op == "below":
-        recs.insert(i + 1, {})
-        new = i + 1
-    elif op == "dup":
-        c = copy.deepcopy(recs[i])
-        u = TABLE_DEFS[t]["unique"]
-        if u:
-            c[u] = None  # numbers must stay unique: fill the new one in
-        recs.insert(i + 1, c)
-        new = i + 1
-    elif op == "delete":
-        if not st.session_state.get(f"delconf_{spec['key']}"):
-            st.session_state.flash_err = "Tick 'Confirm delete' first."
-            return
-        recs.pop(i)
-        new = max(0, i - 1)
-        st.session_state[f"delconf_{spec['key']}"] = False
-    st.session_state[sk] = new
-    names = {"up": "moved up", "down": "moved down", "top": "moved to top", "bottom": "moved to bottom", "goto": "moved",
-             "above": "inserted", "below": "inserted", "dup": "duplicated", "delete": "deleted", "add_first": "added"}
-    _finish(spec, recs, True, f"Row {names.get(op, op)}")
-
-
-def _col_op(spec, op):
-    d = D()
-    t = spec["t"]
-    m = tmeta(d, t)
-    k = spec["key"]
-    order = m["order"]
-    shown = vis(m)
-    j = min(st.session_state.get(f"colsel_{k}", 0) or 0, len(shown) - 1)
-    cid = shown[j]
-    msg = None
-    if op in ("left", "right"):
-        nb = j - 1 if op == "left" else j + 1
-        if 0 <= nb < len(shown):
-            a, b = order.index(cid), order.index(shown[nb])
-            order[a], order[b] = order[b], order[a]
-            st.session_state[f"colsel_{k}"] = nb
-            msg = f"Column moved {op}"
-    elif op == "hide":
-        if cid in m["custom"]:
-            return
-        m["hidden"].append(cid)
-        st.session_state[f"colsel_{k}"] = max(0, j - 1)
-        msg = f'Column "{m["labels"][cid]}" hidden'
-    elif op == "show":
-        c = st.session_state.get(f"unhide_{k}")
-        if c in m["hidden"]:
-            m["hidden"].remove(c)
-            msg = f'Column "{m["labels"][c]}" shown'
-    elif op == "rename":
-        new = (st.session_state.get(f"colname_{k}") or "").strip()
-        if not new:
-            st.session_state.flash_err = "Type the new column name first."
-            return
-        if any(m["labels"][c].lower() == new.lower() for c in order if c != cid):
-            st.session_state.flash_err = f'A column named "{new}" already exists.'
-            return
-        m["labels"][cid] = new
-        if t in ("mqis", "ds6") and cid in TABLE_DEFS[t]["core"]:
-            d[t][0][TABLE_DEFS[t]["core"].index(cid)] = new
-        st.session_state[f"colname_{k}"] = ""
-        msg = f'Column renamed to "{new}"'
-    elif op == "insert":
-        new = (st.session_state.get(f"newcol_{k}") or "").strip()
-        if not new:
-            st.session_state.flash_err = "Type a name for the new column."
-            return
-        if any(m["labels"][c].lower() == new.lower() for c in order):
-            st.session_state.flash_err = f'A column named "{new}" already exists.'
-            return
-        nid = _slug(new, set(order) | set(m["custom"]))
-        m["custom"][nid] = TYPE_NAMES.get(st.session_state.get(f"newtype_{k}", "Text"), "text")
-        m["labels"][nid] = new
-        at = order.index(cid)
-        before = st.session_state.get(f"newpos_{k}", "After") == "Before"
-        order.insert(at if before else at + 1, nid)
-        st.session_state[f"colsel_{k}"] = j if before else j + 1
-        st.session_state[f"newcol_{k}"] = ""
-        msg = f'Column "{new}" added'
-    elif op == "delete":
-        if cid not in m["custom"]:
-            st.session_state.flash_err = "Built-in columns can be renamed or moved, but not deleted."
-            return
-        if not st.session_state.get(f"coldelconf_{k}"):
-            st.session_state.flash_err = "Tick 'Confirm delete' first."
-            return
-        lab = m["labels"].pop(cid, cid)
-        m["custom"].pop(cid, None)
-        order.remove(cid)
-        if t == "acts":  # same columns in every project
-            for p in d["projects"]:
-                for a in p["acts"]:
-                    if len(a) > 5 and isinstance(a[5], dict):
-                        a[5].pop(cid, None)
-        elif t == "teknic":
-            for p in d["tk"]["parts"]:
-                p.pop(cid, None)
-        else:
-            n = len(TABLE_DEFS[t]["core"])
-            for r in d[t][1]:
-                if len(r) > n and isinstance(r[n], dict):
-                    r[n].pop(cid, None)
-        st.session_state[f"colsel_{k}"] = max(0, j - 1)
-        st.session_state[f"coldelconf_{k}"] = False
-        msg = f'Column "{lab}" deleted'
-    if msg:
-        commit(msg)
-        _bump(spec)
-
-
-def _set_renumber(spec):
-    tmeta(D(), spec["t"])["renumber"] = bool(st.session_state.get(f"renum_{spec['key']}"))
-    commit("Auto-numbering " + ("on" if tmeta(D(), spec["t"])["renumber"] else "off"))
-
-
-def render_table(spec, computed=None, colcfg_extra=None, height=None, help_text=None):
-    """Editable table with auto-save + row and column tools. computed(rec) -> {label: value} adds read-only columns."""
-    d = D()
-    t, k = spec["t"], spec["key"]
     td = TABLE_DEFS[t]
     m = tmeta(d, t)
     recs = spec["get"]()
-    order = vis(m)
-    labels = [m["labels"][c] for c in order]
-    data = [[_to_cell(r.get(c), _ctype(m, t, c)) for c in order] for r in recs]
-    df = pd.DataFrame(data, columns=labels)
-    comp_cols = []
-    if computed:
-        extra = [computed(r) for r in recs]
-        comp_cols = list(computed({}).keys()) if not extra else list(extra[0].keys())
-        for c in comp_cols:
-            df[c] = [e.get(c) for e in extra]
-    cfg = {}
-    for c, lab in zip(order, labels):
-        typ = _ctype(m, t, c)
-        if typ == "number":
-            df[lab] = pd.to_numeric(df[lab], errors="coerce")
-            cfg[lab] = st.column_config.NumberColumn(format="₹ %.2f" if c in ("price", "exp", "qp") else None)
+    columns = []
+    for cid in m["order"]:
+        typ = _ctype(m, t, cid)
+        lab = m["labels"][cid]
+        col = {"title": lab, "name": cid, "locked": cid in td["core"],
+               "width": 70 if cid in ("slno", "step") else 300 if cid in ("activity", "remarks") else
+               220 if cid in ("partname", "name", "supplier", "vendor", "mpn1", "mpn", "exs", "alts") else
+               110 if typ in ("number", "date") else 150}
+        if cid in m["hidden"]:
+            col["type"] = "hidden"
+        elif dropdowns and cid in dropdowns:
+            col.update(type="dropdown", source=dropdowns[cid], autocomplete=True)
+        elif typ == "number":
+            col["type"] = "numeric"
         elif typ == "date":
-            cfg[lab] = st.column_config.DateColumn(format="DD MMM YY")
+            col.update(type="calendar", options={"format": "DD-MMM-YY"})
         else:
-            df[lab] = df[lab].astype(object)
-            cfg[lab] = st.column_config.TextColumn(width="large" if c in ("activity", "remarks", "partname", "name") else None)
-    for c, conf in (colcfg_extra or {}).items():
-        if c in order:
-            cfg[m["labels"][c]] = conf
-    ek = f"ed_{k}_{st.session_state.get(f'ver_{k}', 0)}"
-    bar = st.columns([6, 1.2, 1.4])
-    bar[0].caption(help_text or "Changes save automatically. Use **Rows** to insert, move or delete rows anywhere, "
-                               "and **Columns** to add, move, rename or delete columns.")
-    with bar[1].popover("↕ Rows", use_container_width=True):
-        _row_tools(spec, recs, td)
-    with bar[2].popover("⇆ Columns", use_container_width=True):
-        _col_tools(spec, m, td)
-    st.data_editor(df, key=ek, num_rows="dynamic", hide_index=True, width="stretch", height=height or "auto",
-                   column_config=cfg, disabled=comp_cols, on_change=_apply_editor, args=(spec, ek))
+            col["type"] = "text"
+        col["align"] = "right" if typ == "number" else "center" if typ == "date" or cid in ("slno", "step") else "left"
+        columns.append(col)
+    data = [[_cellval(r.get(cid), _ctype(m, t, cid)) for cid in m["order"]] for r in recs]
+    comp_rows = None
+    if computed:
+        comp_rows = [computed(r) for r in recs]
+        titles = list(computed({}).keys())
+        for ti in titles:
+            columns.append({"title": ti, "name": "__comp_" + ti, "type": "text", "readOnly": True, "width": 110, "locked": True,
+                            "align": "center"})
+        for row, cr in zip(data, comp_rows):
+            row.extend("" if cr.get(ti) is None else cr.get(ti) for ti in titles)
+    sig = hashlib.md5(json.dumps([[c["title"], c["name"], c["type"]] for c in columns] +
+                                 [[x for x in row[:len(m["order"])]] for row in data], default=str).encode()).hexdigest()
+    return columns, data, comp_rows, sig
 
 
-def _row_tools(spec, recs, td):
+def _grid_apply(spec, val):
+    d = D()
+    t = spec["t"]
+    td = TABLE_DEFS[t]
+    m = tmeta(d, t)
+    headers = val.get("headers") or []
+    ids = val.get("ids") or [None] * len(headers)
+    lab2id = {_nk(lab): cid for cid, lab in m["labels"].items()}
+    used, colids = set(), []
+    for h, i in zip(headers, ids):
+        if i and str(i).startswith("__comp_"):
+            colids.append(None)
+            continue
+        cid = i if (i in td["core"] or i in m["custom"]) and i not in used else None
+        if not cid:
+            c2 = lab2id.get(_nk(h))
+            cid = c2 if c2 and c2 not in used else None
+        title = str(h).strip() if not blank(h) else "New column"
+        if not cid:
+            cid = _slug(title, set(m["order"]) | set(m["custom"]) | used)
+            m["custom"][cid] = "text"
+        m["labels"][cid] = title
+        used.add(cid)
+        colids.append(cid)
+    for cid in list(m["custom"]):
+        if cid not in used:
+            m["custom"].pop(cid, None)
+            m["labels"].pop(cid, None)
+    m["hidden"] = sorted(set(m["hidden"]) | {c for c in td["core"] if c not in used}, key=td["core"].index)
+    m["order"] = [c for c in colids if c] + [c for c in td["core"] if c not in used]
+    if t in ("mqis", "ds6"):
+        d[t][0] = [m["labels"][c] for c in td["core"]]
+    recs = []
+    for row in val.get("data") or []:
+        rec = {}
+        for cid, v in zip(colids, row):
+            if cid:
+                rec[cid] = _from_cell(v, _ctype(m, t, cid))
+        recs.append(rec)
+    while recs and all(blank(v) for v in recs[-1].values()):
+        recs.pop()
+    err = _validate(t, recs)
+    if err:
+        return False, err
+    spec["set"](recs)
+    commit(f"{td['title'].capitalize()} saved")
+    return True, None
+
+
+def excel_grid(spec, computed=None, dropdowns=None, height=460, help_text=None):
+    """Excel-like editable grid with auto-save, undo/redo, insert/move/rename rows and columns."""
+    ss = st.session_state
     k = spec["key"]
-    if not recs:
-        st.caption("The table is empty.")
-        st.button("➕ Add first row", key=f"addfirst_{k}", on_click=_row_op, args=(spec, "add_first"))
-        return
-    sk = f"rowsel_{k}"
-    if (st.session_state.get(sk) or 0) >= len(recs):
-        st.session_state[sk] = len(recs) - 1
-    lc = td["label_col"]
-    st.selectbox("Row", list(range(len(recs))), key=sk,
-                 format_func=lambda i: f"{i + 1}. {str(recs[i].get(lc) or '(blank)')[:48]}")
-    c = st.columns(2)
-    c[0].button("⬆ Move up", key=f"up_{k}", on_click=_row_op, args=(spec, "up"), use_container_width=True)
-    c[1].button("⬇ Move down", key=f"down_{k}", on_click=_row_op, args=(spec, "down"), use_container_width=True)
-    c = st.columns(2)
-    c[0].button("⤒ To top", key=f"top_{k}", on_click=_row_op, args=(spec, "top"), use_container_width=True)
-    c[1].button("⤓ To bottom", key=f"bot_{k}", on_click=_row_op, args=(spec, "bottom"), use_container_width=True)
-    c = st.columns([1, 1])
-    c[0].number_input("Move to position", min_value=1, max_value=len(recs), step=1, key=f"goto_{k}")
-    c[1].button("Move", key=f"gobtn_{k}", on_click=_row_op, args=(spec, "goto"), use_container_width=True)
-    st.divider()
-    c = st.columns(2)
-    c[0].button("➕ Insert above", key=f"above_{k}", on_click=_row_op, args=(spec, "above"), use_container_width=True)
-    c[1].button("➕ Insert below", key=f"below_{k}", on_click=_row_op, args=(spec, "below"), use_container_width=True)
-    st.button("⧉ Duplicate row", key=f"dup_{k}", on_click=_row_op, args=(spec, "dup"), use_container_width=True)
-    st.divider()
-    st.checkbox("Confirm delete", key=f"delconf_{k}")
-    st.button("🗑 Delete row", key=f"del_{k}", on_click=_row_op, args=(spec, "delete"), use_container_width=True)
-    if td["renumber"]:
-        st.divider()
-        st.session_state.setdefault(f"renum_{k}", tmeta(D(), spec["t"]).get("renumber", True))
-        st.checkbox(f"Auto-number the {'Step' if td['renumber'] == 'step' else 'Sl.No'} column after insert / move / delete",
-                    key=f"renum_{k}", on_change=_set_renumber, args=(spec,))
-
-
-def _col_tools(spec, m, td):
-    k = spec["key"]
-    order = vis(m)
-    ck = f"colsel_{k}"
-    if (st.session_state.get(ck) or 0) >= len(order):
-        st.session_state[ck] = len(order) - 1
-    st.selectbox("Column", list(range(len(order))), key=ck, format_func=lambda j: m["labels"][order[j]])
-    j = st.session_state.get(ck) or 0
-    c = st.columns(2)
-    c[0].button("◀ Move left", key=f"cl_{k}", on_click=_col_op, args=(spec, "left"), use_container_width=True)
-    c[1].button("Move right ▶", key=f"cr_{k}", on_click=_col_op, args=(spec, "right"), use_container_width=True)
-    st.text_input("Rename selected column to", key=f"colname_{k}")
-    st.button("✏️ Rename", key=f"cren_{k}", on_click=_col_op, args=(spec, "rename"), use_container_width=True)
-    st.divider()
-    st.text_input("New column name", key=f"newcol_{k}")
-    c = st.columns(2)
-    c[0].radio("Type", list(TYPE_NAMES), key=f"newtype_{k}", horizontal=False)
-    c[1].radio("Insert", ["Before", "After"], index=1, key=f"newpos_{k}", horizontal=False)
-    st.button("➕ Insert column next to selected", key=f"cins_{k}", on_click=_col_op, args=(spec, "insert"),
-              use_container_width=True)
-    st.divider()
-    if order[j] in m["custom"]:
-        st.checkbox("Confirm delete", key=f"coldelconf_{k}")
-        st.button("🗑 Delete selected column", key=f"cdel_{k}", on_click=_col_op, args=(spec, "delete"), use_container_width=True)
-    else:
-        st.button("🙈 Hide selected column", key=f"chide_{k}", on_click=_col_op, args=(spec, "hide"), use_container_width=True)
-        st.caption("Built-in column: it can be renamed, moved or hidden, not deleted.")
-    if m["hidden"]:
-        st.selectbox("Hidden columns", m["hidden"], key=f"unhide_{k}", format_func=lambda c: m["labels"][c])
-        st.button("👁 Show again", key=f"cshow_{k}", on_click=_col_op, args=(spec, "show"), use_container_width=True)
+    columns, data, comp_rows, sig = _grid_build(spec, computed, dropdowns)
+    if ss.get(f"gsig_{k}") != sig:  # data changed outside the grid (upload, other page) → reload grid
+        ss[f"gsig_{k}"] = sig
+        ss[f"grev_{k}"] = ss.get(f"grev_{k}", 0) + 1
+    if help_text:
+        st.caption(help_text)
+    err = ss.get(f"gerr_{k}")
+    td = TABLE_DEFS[spec["t"]]
+    val = _grid_component()(rev=ss[f"grev_{k}"], columns=columns, data=data, computed=comp_rows, height=height,
+                            renumber=td["renumber"], status=err or "", status_err=bool(err), key=f"grid_{k}", default=None)
+    if val and val.get("nonce") != ss.get(f"gnonce_{k}") and val.get("rev") == ss[f"grev_{k}"]:
+        ss[f"gnonce_{k}"] = val.get("nonce")
+        ok, msg = _grid_apply(spec, val)
+        if ok:
+            ss.pop(f"gerr_{k}", None)
+            ss[f"gsig_{k}"] = _grid_build(spec, computed, dropdowns)[3]
+            st.rerun()
+        else:
+            ss[f"gerr_{k}"] = msg
+            st.error(msg)
 
 
 def _rename_activity(scope_pi):
@@ -1856,10 +1785,7 @@ def page_projects():
             a = [rec.get("step"), rec.get("activity"), rec.get("plan"), rec.get("actual"), rec.get("remarks")]
             stt = activity_status(a)
             return {"Status": stt, "Days Late": (today() - to_date(a[2])).days if stt == "Delayed" else None}
-        render_table(spec_acts(pi), computed=comp,
-                     help_text="Edit any cell; it saves automatically. Rename an activity by typing over it. "
-                               "**Rows**: insert in between, move, duplicate, delete. **Columns**: add, move, rename. "
-                               "Status and Days Late are calculated.")
+        excel_grid(spec_acts(pi), computed=comp, height=520)
         with st.expander("🔤 Rename an activity in this project or in all projects"):
             names = sorted({(a[1] or "").strip() for pp in d["projects"] for a in pp["acts"] if not blank(a[1])})
             c1, c2 = st.columns(2)
@@ -1972,13 +1898,11 @@ def page_parts(key):
         st.info("No parts yet. Upload your Excel in Data Management, or switch on Edit mode to add parts.")
     edit = st.toggle("✏️ Edit mode (changes save automatically)", key=f"edit_{key}")
     if edit:
-        extra = {}
+        drops = {}
         if cfg["proj"] is not None:
-            opts = sorted(set(PROJECT_CHOICES) | {str(r[cfg["proj"]]) for r in rows if not blank(r[cfg["proj"]])})
-            extra["project"] = st.column_config.SelectboxColumn(options=opts)
-        render_table(spec_parts(key), colcfg_extra=extra, height=560,
-                     help_text="Edit any cell; it saves automatically. **Rows**: insert in between, move, duplicate, delete. "
-                               "**Columns**: add, move, rename. Part No must be unique. MAKE/MPN format: MAKE/MPN.")
+            drops["project"] = sorted(set(PROJECT_CHOICES) | {str(r[cfg["proj"]]) for r in rows if not blank(r[cfg["proj"]])})
+        excel_grid(spec_parts(key), dropdowns=drops, height=560,
+                   help_text="Part No must be unique. MAKE/MPN format: MAKE/MPN.")
         return
     recs = [_row_to_rec(r, core) for r in rows]
     order = vis(m)
@@ -2229,9 +2153,7 @@ def page_teknic():
             commit("Station volume updated")
             st.rerun()
     st.markdown('<div class="section">Parts — edit inputs here (changes save automatically)</div>', unsafe_allow_html=True)
-    render_table(spec_teknic(),
-                 help_text="Edit any cell; it saves automatically. **Rows**: insert in between, move, duplicate, delete. "
-                           "**Columns**: add, move, rename. Savings below recalculate.")
+    excel_grid(spec_teknic(), height=300)
     c = teknic_calc(D()["tk"])
     if c["rows"]:
         st.markdown('<div class="section">Savings (calculated)</div>', unsafe_allow_html=True)
