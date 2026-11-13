@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-13T09:05:46",
+ "savedAt": "2026-11-13T10:09:17",
  "data": {
   "mqis": [
    [
@@ -2884,6 +2884,29 @@
    "Production Approval (Engg + Quality)",
    "Bulk PO Release",
    "Closure & Handover to Regular Buyer"
-  ]
+  ],
+  "meta": {
+   "acts": {
+    "custom": {},
+    "labels": {
+     "step": "Step",
+     "activity": "Activity",
+     "plan": "Plan Date",
+     "actual": "Actual Date",
+     "remarks": "Remarks"
+    },
+    "order": [
+     "step",
+     "activity",
+     "plan",
+     "actual",
+     "remarks"
+    ],
+    "renumber": true,
+    "hidden": [
+     "step"
+    ]
+   }
+  }
  }
 }
