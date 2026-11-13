@@ -212,11 +212,20 @@ def norm(d: dict) -> dict:
             d[key] = [hdr[:], []]
         ncol = PCFG[key]["ncol"]
         d[key][0] = (list(d[key][0]) + hdr[len(d[key][0]):])[:ncol]
-        d[key][1] = [(list(r) + [None] * ncol)[:ncol] for r in d[key][1]]
+        d[key][1] = [_norm_row(r, ncol) for r in d[key][1]]
     for p in d["projects"]:
         p.setdefault("status", "")
-        p["acts"] = [(list(a) + [None] * 5)[:5] for a in p.get("acts", [])]
+        p["acts"] = [_norm_row(a, 5) for a in p.get("acts", [])]
+    d.setdefault("meta", {})
     return d
+
+
+def _norm_row(r, n):
+    """Core values in fixed positions + optional dict of extra (user-added) column values at position n."""
+    r = list(r)
+    ex = r[n] if len(r) > n and isinstance(r[n], dict) else None
+    core = (r[:n] + [None] * n)[:n]
+    return core + [ex] if ex else core
 
 
 def std_acts(d) -> list:
@@ -320,32 +329,103 @@ def _grid(ws):
     return [[c for c in row] for row in ws.iter_rows(values_only=True)]
 
 
-def _parts(ws, hdr_re, ncol):
+def _slug(label, taken):
+    base = "x_" + (re.sub(r"[^a-z0-9]+", "_", str(label).lower()).strip("_") or "col")
+    sid, n = base, 2
+    while sid in taken:
+        sid, n = f"{base}_{n}", n + 1
+    return sid
+
+
+def _extra_meta(labels, values_by_col):
+    """Build meta for user-added columns found in Excel: {id: type}, {id: label}, [ids]."""
+    custom, lab, ids = {}, {}, []
+    for label, vals in zip(labels, values_by_col):
+        cid = _slug(label, set(ids))
+        nonblank = [v for v in vals if not blank(v)]
+        typ = "number" if nonblank and all(isinstance(v, (int, float)) and not isinstance(v, bool) for v in nonblank) else (
+            "date" if nonblank and all(isinstance(v, (datetime, date)) for v in nonblank) else "text")
+        custom[cid], lab[cid] = typ, label
+        ids.append(cid)
+    return custom, lab, ids
+
+
+SYNONYMS = {
+    "mqis": {"slno": ["slno", "sno", "srno", "serialno"], "partno": ["partno", "partnumber", "itemcode"],
+             "partname": ["partname", "description", "partdescription"], "qty": ["bomqtyset", "bomqty", "qty", "qtyset"],
+             "uom": ["uom", "unit"], "buyer": ["buyer"], "supplier": ["supplier", "vendor"], "project": ["project"],
+             "mpn1": ["makempn1", "makempn"], "mpn2": ["makempn2"], "mpn3": ["makempn3"],
+             "price": ["price", "unitprice", "unitcost", "cost"]},
+    "ds6": {"slno": ["sno", "slno", "srno"], "partno": ["partno", "partnumber", "itemcode"], "partname": ["partname", "description"],
+            "rev": ["rev", "revision"], "qty": ["qty", "qtyset"], "uom": ["uom", "unit"],
+            "qty50": ["qytrequiredfor50sets", "qtyrequiredfor50sets", "qtyfor50sets", "qty50sets"],
+            "vendor": ["vendor", "supplier"], "mpn": ["makempn", "mpn"], "price": ["unitcost", "price", "unitprice", "cost"]},
+}
+
+
+def _nk(v):
+    return re.sub(r"[^a-z0-9]", "", str(v or "").lower())
+
+
+def _map_header(labels, t, cur_labels=None):
+    """Match sheet header labels to built-in column ids by name (so added, removed or moved Excel columns still map).
+    Returns ({cid: index in labels}, [indexes not matched])."""
+    syn = {cid: set(v) for cid, v in SYNONYMS.get(t, {}).items()}
+    for cid, lab in (cur_labels or {}).items():
+        if cid in syn and not blank(lab):
+            syn[cid].add(_nk(lab))
+    found, rest = {}, []
+    for i, lab in enumerate(labels):
+        k = _nk(lab)
+        cid = next((c for c in TABLE_DEFS[t]["core"] if c not in found and k in syn.get(c, ())), None)
+        if cid:
+            found[cid] = i
+        elif not blank(lab):
+            rest.append(i)
+    return found, rest
+
+
+def _parts(ws, hdr_re, ncol, meta_out=None, key=None, cur_meta=None):
     g = _grid(ws)
     hi = next((i for i, r in enumerate(g) if any(re.fullmatch(hdr_re, str(v or "").strip(), re.I) for v in r)), -1)
     if hi < 0:
         raise ValueError(f'Could not find the header row in sheet "{ws.title}".')
     c0 = next(i for i, v in enumerate(g[hi]) if not blank(v))
-    hdr = [str(v or "").replace("\xa0", " ").strip() for v in g[hi][c0:c0 + ncol]]
+    labels = [str(v or "").replace("\xa0", " ").strip() for v in g[hi][c0:]]
+    while labels and blank(labels[-1]):
+        labels.pop()
+    found, rest = _map_header(labels, key, (cur_meta or {}).get("labels"))
+    core = TABLE_DEFS[key]["core"]
+    defaults = MQIS_HEADERS if key == "mqis" else DS6_HEADERS
+    hdr = [labels[found[c]] if c in found else defaults[i] for i, c in enumerate(core)]
+    xlabels = [labels[i] for i in rest]
+    body = [list(r[c0:]) + [None] * (len(labels) + 1) for r in g[hi + 1:]]
+    custom, lab, ids = _extra_meta(xlabels, [[r[i] for r in body] for i in rest])
     rows = []
-    for r in g[hi + 1:]:
-        r = (list(r[c0:c0 + ncol]) + [None] * ncol)[:ncol]
-        if any(not blank(v) for v in r):
-            rows.append([jsonable(v) for v in r])
+    for r in body:
+        vals = [jsonable(r[found[c]]) if c in found else None for c in core]
+        ex = {cid: jsonable(r[i]) for cid, i in zip(ids, rest) if not blank(r[i])}
+        if any(not blank(v) for v in vals) or ex:
+            rows.append(vals + ([ex] if ex else []))
+    if meta_out is not None and key:
+        meta_out[key] = {"custom": custom, "labels": {**{c: hdr[i] for i, c in enumerate(core)}, **lab},
+                         "hidden": [c for c in core if c not in found]}
     return [hdr, rows]
 
 
 def parse_workbook(file_bytes: bytes, current: dict | None = None) -> dict:
     wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
-    nd = {"fanExtra": (current or {}).get("fanExtra", []), "stdActs": (current or {}).get("stdActs", DEFAULT_STAGE_GATE[:])}
+    nd = {"fanExtra": (current or {}).get("fanExtra", []), "stdActs": (current or {}).get("stdActs", DEFAULT_STAGE_GATE[:]),
+          "meta": {}}
+    old_meta = (current or {}).get("meta", {})
     ws = _sheet(wb, "mqis")
     if ws is None:
         raise ValueError("The MQIS / Single Phase parts sheet was not found.")
-    nd["mqis"] = _parts(ws, r"Part No", 12)
+    nd["mqis"] = _parts(ws, r"Part No", 12, nd["meta"], "mqis", old_meta.get("mqis"))
     ws = _sheet(wb, "ds6")
     if ws is None:
         raise ValueError("The 6DS parts sheet was not found.")
-    nd["ds6"] = _parts(ws, r"Part No\.?", 10)
+    nd["ds6"] = _parts(ws, r"Part No\.?", 10, nd["meta"], "ds6", old_meta.get("ds6"))
     ws = _sheet(wb, "projects")
     if ws is None:
         raise ValueError("The ALTERNATE DEVELOPNMENT sheet was not found.")
@@ -353,16 +433,25 @@ def parse_workbook(file_bytes: bytes, current: dict | None = None) -> dict:
     si = next((i for i, r in enumerate(g) if r and str(r[0] or "").strip() == "Stage"), -1)
     if si < 0:
         raise ValueError('Could not find the "Stage" header in the Alternate Development sheet.')
+    head = list(g[si]) + [None]
+    xcols = [j for j in range(7, len(g[si])) if not blank(g[si][j])]  # columns after the hidden key column G
+    xlabels = [str(g[si][j]).strip() for j in xcols]
+    body = [list(r) + [None] * (len(head) + 6) for r in g[si + 1:]]
+    custom, lab, ids = _extra_meta(xlabels, [[r[j] for r in body if not blank(r[1])] for j in xcols])
+    nd["meta"]["acts"] = {"custom": custom, "labels": lab}
     projects, cur = [], None
-    for r in g[si + 1:]:
-        r = list(r) + [None] * 6
+    for r in body:
         a, b = r[0], r[1]
         if isinstance(a, str) and a.strip() and blank(b):
             cur = {"name": a.strip(), "status": str(r[4] or "").strip(), "acts": []}
             projects.append(cur)
         elif cur is not None and not blank(b):
-            cur["acts"].append([jsonable(a), b, iso(r[2]) or jsonable(r[2]), iso(r[3]) or jsonable(r[3]), jsonable(r[5])])
+            ex = {cid: (iso(r[j]) if custom[cid] == "date" else jsonable(r[j])) for cid, j in zip(ids, xcols) if not blank(r[j])}
+            cur["acts"].append([jsonable(a), b, iso(r[2]) or jsonable(r[2]), iso(r[3]) or jsonable(r[3]), jsonable(r[5])]
+                               + ([ex] if ex else []))
     nd["projects"] = projects
+    if "teknic" in old_meta:
+        nd["meta"]["teknic"] = old_meta["teknic"]
     ws = _sheet(wb, "fan")
     nd["fan"] = [[jsonable(v) for v in (list(r) + [None] * 5)[1:5]] for r in _grid(ws)] if ws is not None else (current or {}).get("fan", [])
     ws = _sheet(wb, "teknic")
@@ -428,15 +517,23 @@ def clean_export(d: dict) -> bytes:
                  [["#", "Project Name", "Status", "Activities Done", "Total", "Progress %", "Delayed"]] +
                  [[i + 1, p["name"], p["status"], s["done"], s["total"], round(s["pct"] * 100), len(s["late"])]
                   for i, (p, s) in enumerate(zip(d["projects"], stats))], [5, 32, 12, 14, 8, 11, 9])
-    _write_table(wb.create_sheet(SHEETS["mqis"][:31]), [d["mqis"][0]] + d["mqis"][1],
-                 [6, 12, 38, 10, 6, 10, 32, 10, 34, 28, 16, 12], money_cols=(12,))
-    _write_table(wb.create_sheet(SHEETS["ds6"][:31]), [d["ds6"][0]] + d["ds6"][1],
-                 [6, 12, 38, 6, 6, 6, 12, 26, 26, 12], money_cols=(10,))
-    det = [["Project", "#", "Stage-Gate Activity", "Plan Date", "Actual Date", "Status", "Remarks"]]
+    for key in ("mqis", "ds6"):
+        m = tmeta(d, key)
+        recs = [_row_to_rec(r, TABLE_DEFS[key]["core"]) for r in d[key][1]]
+        cols = vis(m)
+        aoa = [[m["labels"][c] for c in cols]] + [[recs_v(r, c) for c in cols] for r in recs]
+        _write_table(wb.create_sheet(SHEETS[key][:31]), aoa, [max(8, min(40, len(str(h)) + 6)) for h in aoa[0]],
+                     money_cols=(cols.index("price") + 1,) if "price" in cols else ())
+    m = tmeta(d, "acts")
+    cols = vis(m)
+    det = [["Project", "Project Status"] + [m["labels"][c] for c in cols]]
     for p in d["projects"]:
         for a in p["acts"]:
-            det.append([p["name"], a[0], a[1], a[2], a[3], p["status"], a[4]])
-    _write_table(wb.create_sheet(SHEETS["projects"][:31]), det, [26, 5, 46, 12, 12, 12, 70], date_cols=(4, 5))
+            rec = _row_to_rec(a, TABLE_DEFS["acts"]["core"])
+            det.append([p["name"], p["status"]] + [recs_v(rec, c) for c in cols])
+    dcols = tuple(i + 3 for i, c in enumerate(cols) if _ctype(m, "acts", c) == "date")
+    _write_table(wb.create_sheet(SHEETS["projects"][:31]), det, [26, 12] + [max(8, min(60, len(str(h)) + 8)) for h in det[0][2:]],
+                 date_cols=dcols)
     ws = wb.create_sheet(SHEETS["fan"])
     for row in d["fan"]:
         ws.append(row)
@@ -446,14 +543,17 @@ def clean_export(d: dict) -> bytes:
         _fan_extra_sheet(wb, f, i + 2)
     t = d["tk"]
     c = teknic_calc(t)
+    tm = tmeta(d, "teknic")
+    xc = [cid for cid in tm["order"] if cid in tm["custom"]]
     tk = [["Part No.", "Part Name", "Make", "MPN", "BOM / Station", "Existing Supplier", "Alternate Supplier",
-           "Existing Unit Price (₹)", "Quoted Unit Price (₹)", "Saving / Unit (₹)", "Saving %", "Saving / Station (₹)"]]
+           "Existing Unit Price (₹)", "Quoted Unit Price (₹)", "Saving / Unit (₹)", "Saving %", "Saving / Station (₹)"]
+          + [tm["labels"][cid] for cid in xc]]
     for p in c["rows"]:
         tk.append([p["pn"], p["name"], p["make"], p["mpn"], p["bom"], p["exs"], p["alts"], p["exp"], p["qp"],
-                   p["save"], p["pct"], p["save_stn"]])
+                   p["save"], p["pct"], p["save_stn"]] + [p.get(cid) for cid in xc])
     tk.append(["TOTAL PER STATION", None, None, None, None, None, None, c["te"], c["tq"], None, c["pct"], c["ts"]])
     ws = wb.create_sheet(SHEETS["teknic"])
-    _write_table(ws, tk, [14, 28, 10, 30, 8, 16, 14, 14, 14, 12, 9, 14], money_cols=(8, 9, 10, 12), pct_cols=(11,))
+    _write_table(ws, tk, [14, 28, 10, 30, 8, 16, 14, 14, 14, 12, 9, 14] + [16] * len(xc), money_cols=(8, 9, 10, 12), pct_cols=(11,))
     ws.append([])
     ws.append(["Stations per year", t.get("stations")])
     ws.append(["Annual saving (₹)", c["annual"]])
@@ -546,31 +646,59 @@ def _find_header(ws, pattern):
     return None, None
 
 
-def _write_parts_sheet(ws, hdr_pat, data_rows, ncol, money_col):
+def _write_parts_sheet(ws, hdr_pat, t, d):
+    """Write the parts list back into the user's sheet, matching columns by header name (built-in + added columns)."""
     hr, _ = _find_header(ws, hdr_pat)
     if hr is None:
         return
+    m = tmeta(d, t)
+    core = TABLE_DEFS[t]["core"]
     c0 = next(c for c in range(1, ws.max_column + 1) if ws.cell(hr, c).value not in (None, ""))
-    template = _row_styles(ws, hr + 1, c0, c0 + ncol - 1)
+    last_hdr = max(c for c in range(c0, ws.max_column + 1) if ws.cell(hr, c).value not in (None, ""))
+    labels = [ws.cell(hr, c).value for c in range(c0, last_hdr + 1)]
+    found, rest = _map_header(labels, t, m["labels"])
+    colof = {cid: c0 + i for cid, i in found.items()}
+    free = {_nk(labels[i]): c0 + i for i in rest}
+    nxt = last_hdr + 1
+    head_style = _style_of(ws.cell(hr, last_hdr))
+    for cid in [c for c in m["order"] if c in m["custom"]]:
+        k = _nk(m["labels"][cid])
+        if k in free:
+            colof[cid] = free.pop(k)
+        else:
+            colof[cid] = nxt
+            nxt += 1
+    template = _row_styles(ws, hr + 1, c0, max(last_hdr, nxt))
+    body_style = template.get(c0 + 2)
     height = ws.row_dimensions[hr + 1].height
+    cols = sorted(set(colof.values()))
     old_last = hr
     for r in range(hr + 1, ws.max_row + 1):
-        if any(ws.cell(r, c).value not in (None, "") for c in range(c0, c0 + ncol)):
+        if any(ws.cell(r, c).value not in (None, "") for c in cols):
             old_last = r
     _unmerge_from(ws, hr + 1)
-    for r in range(hr + 1, max(old_last, hr + len(data_rows)) + 1):
-        for c in range(c0, c0 + ncol):
+    for cid, c in colof.items():  # headers: renamed built-ins + added columns
+        cell = ws.cell(hr, c)
+        if c > last_hdr:
+            _apply_style(cell, head_style)
+            ws.column_dimensions[get_column_letter(c)].width = max(12, min(40, len(str(m["labels"][cid])) + 6))
+        cell.value = m["labels"][cid]
+    rows = d[t][1]
+    for r in range(hr + 1, max(old_last, hr + len(rows)) + 1):
+        for c in cols:
             ws.cell(r, c).value = None
-    for i, row in enumerate(data_rows):
+    for i, row in enumerate(rows):
+        rec = _row_to_rec(row, core)
         r = hr + 1 + i
-        for j in range(ncol):
-            cell = ws.cell(r, c0 + j)
-            _apply_style(cell, template.get(c0 + j))
-            cell.value = jsonable(row[j]) if j < len(row) else None
+        for cid, c in colof.items():
+            cell = ws.cell(r, c)
+            _apply_style(cell, template.get(c) if c <= last_hdr else body_style)
+            v = rec.get(cid)
+            cell.value = datetime.combine(to_date(v), datetime.min.time()) if isinstance(v, str) and re.match(r"\d{4}-\d{2}-\d{2}$", v) else jsonable(v)
         if height:
             ws.row_dimensions[r].height = height
-    last = hr + max(len(data_rows), 1)
-    ws.auto_filter.ref = f"{get_column_letter(c0)}{hr}:{get_column_letter(c0 + ncol - 1)}{last}"
+    lastc = max(cols) if cols else last_hdr
+    ws.auto_filter.ref = f"{get_column_letter(c0)}{hr}:{get_column_letter(lastc)}{hr + max(len(rows), 1)}"
 
 
 def _remap(ref, old_lo, old_hi, new_lo, new_hi):
@@ -584,7 +712,7 @@ def _remap(ref, old_lo, old_hi, new_lo, new_hi):
     return " ".join(out)
 
 
-def _write_projects_sheet(ws, projects):
+def _write_projects_sheet(ws, projects, extras=()):
     # locate structure of the existing sheet
     stage_row = next((r for r in range(1, ws.max_row + 1) if str(ws.cell(r, 1).value or "").strip() == "Stage"), None)
     if stage_row is None:
@@ -654,6 +782,12 @@ def _write_projects_sheet(ws, projects):
                 ws.cell(r, c).value = datetime.combine(dv, datetime.min.time()) if dv else (v if not blank(v) else None)
             ws.cell(r, 6).value = a[4]
             ws.cell(r, 7).value = f"=G{r - 1}"
+            ex = a[5] if len(a) > 5 and isinstance(a[5], dict) else {}
+            for k, (cid, lab) in enumerate(extras):
+                cell = ws.cell(r, 8 + k)
+                _apply_style(cell, st_act.get(6))
+                v = ex.get(cid)
+                cell.value = datetime.combine(to_date(v), datetime.min.time()) if isinstance(v, str) and re.match(r"\d{4}-\d{2}-\d{2}$", v) else v
         r += 2  # blank separator row
     last = max(r - 2, head_r + 1)
     # section title + header
@@ -662,6 +796,12 @@ def _write_projects_sheet(ws, projects):
     for c in range(1, ncol + 1):
         _apply_style(ws.cell(head_r, c), st_head.get(c))
         ws.cell(head_r, c).value = head_vals[c - 1]
+    for k in range(30):  # extra columns header (clear old, write current)
+        ws.cell(head_r, 8 + k).value = None
+    for k, (cid, lab) in enumerate(extras):
+        _apply_style(ws.cell(head_r, 8 + k), st_head.get(6))
+        ws.cell(head_r, 8 + k).value = lab
+        ws.column_dimensions[get_column_letter(8 + k)].width = max(12, min(40, len(str(lab)) + 6))
     if head_h:
         ws.row_dimensions[head_r].height = head_h
     # top status table
@@ -686,11 +826,11 @@ def _write_projects_sheet(ws, projects):
             ws.conditional_formatting.add(new, rule)
     for dv in dvs:
         dv.sqref = openpyxl.worksheet.cell_range.MultiCellRange(_remap(str(dv.sqref), old_det_lo, old_details_last, head_r + 1, last))
-    ws.auto_filter.ref = f"A{head_r}:F{last}"
+    ws.auto_filter.ref = f"A{head_r}:{get_column_letter(6 if not extras else 7 + len(extras))}{last}"
     ws.print_title_rows = f"{head_r}:{head_r}"
 
 
-def _write_teknic_sheet(ws, tk):
+def _write_teknic_sheet(ws, tk, extras=()):
     hr, _ = _find_header(ws, r"Part No\.?")
     if hr is None:
         return
@@ -736,22 +876,35 @@ def _write_teknic_sheet(ws, tk):
     ws.cell(s, c0 + 2).value = stn_note
     ws.cell(s + 1, c0).value = "Annual saving (₹)"
     ws.cell(s + 1, c0 + 1).value = f'=IF({L(1)}{s}="","Enter stations",{L(11)}{t}*{L(1)}{s})'
+    head_style = _style_of(ws.cell(hr, c0 + 11))
+    for k in range(20):
+        ws.cell(hr, c0 + 12 + k).value = None
+    for k, (cid, lab) in enumerate(extras):
+        _apply_style(ws.cell(hr, c0 + 12 + k), head_style)
+        ws.cell(hr, c0 + 12 + k).value = lab
+        ws.column_dimensions[L(12 + k)].width = max(12, min(40, len(str(lab)) + 6))
+        for i, p in enumerate(parts):
+            cell = ws.cell(hr + 1 + i, c0 + 12 + k)
+            _apply_style(cell, st_part.get(c0 + 1))
+            cell.value = p.get(cid)
 
 
 def formatted_export(orig: bytes, d: dict) -> bytes:
     wb = openpyxl.load_workbook(io.BytesIO(orig))
-    ws = _sheet(wb, "mqis")
-    if ws is not None:
-        _write_parts_sheet(ws, r"Part No", d["mqis"][1], 12, 12)
-    ws = _sheet(wb, "ds6")
-    if ws is not None:
-        _write_parts_sheet(ws, r"Part No\.?", d["ds6"][1], 10, 10)
+    def xcols(t):
+        m = tmeta(d, t)
+        return [(c, m["labels"][c]) for c in m["order"] if c in m["custom"]]
+
+    for key, pat in (("mqis", r"Part No"), ("ds6", r"Part No\.?")):
+        ws = _sheet(wb, key)
+        if ws is not None:
+            _write_parts_sheet(ws, pat, key, d)
     ws = _sheet(wb, "projects")
     if ws is not None:
-        _write_projects_sheet(ws, d["projects"])
+        _write_projects_sheet(ws, d["projects"], xcols("acts"))
     ws = _sheet(wb, "teknic")
     if ws is not None:
-        _write_teknic_sheet(ws, d["tk"])
+        _write_teknic_sheet(ws, d["tk"], xcols("teknic"))
     for name in [n for n in wb.sheetnames if n.startswith("DC Fan ") and n != SHEETS["fan"]]:
         del wb[name]
     for i, f in enumerate(d["fanExtra"]):
@@ -985,6 +1138,9 @@ def flash():
     msg = st.session_state.pop("flash", None)
     if msg:
         st.toast(msg, icon="✅")
+    err = st.session_state.pop("flash_err", None)
+    if err:
+        st.error(err, icon="⚠️")
 
 
 def plot_layout(fig, h=360):
@@ -1022,6 +1178,494 @@ def parts_union(d) -> pd.DataFrame:
                          "Value": (qty or 0) * price if price is not None else None,
                          "MAKE/MPN": next((r[i] for i in cfg["mpn"] if not blank(r[i])), None)})
     return pd.DataFrame(rows)
+
+
+# ----------------------------------------------------------------------------------------------
+# Editable-table engine: auto-save on every edit; insert / move / duplicate / delete rows anywhere;
+# insert / move / rename / delete columns. Used by activities, parts lists and Teknic parts.
+# ----------------------------------------------------------------------------------------------
+TABLE_DEFS = {
+    "mqis": {"core": ["slno", "partno", "partname", "qty", "uom", "buyer", "supplier", "project", "mpn1", "mpn2", "mpn3", "price"],
+             "types": {"qty": "number", "price": "number"}, "renumber": "slno", "label_col": "partname",
+             "required": [], "unique": "partno", "title": "MQIS & Single Phase parts"},
+    "ds6": {"core": ["slno", "partno", "partname", "rev", "qty", "uom", "qty50", "vendor", "mpn", "price"],
+            "types": {"qty": "number", "qty50": "number", "price": "number"}, "renumber": "slno", "label_col": "partname",
+            "required": [], "unique": "partno", "title": "6DS parts"},
+    "acts": {"core": ["step", "activity", "plan", "actual", "remarks"],
+             "labels": ["Step", "Activity", "Plan Date", "Actual Date", "Remarks"],
+             "types": {"step": "number", "plan": "date", "actual": "date"}, "renumber": "step", "label_col": "activity",
+             "required": [], "unique": None, "title": "activities"},
+    "teknic": {"core": ["pn", "name", "make", "mpn", "bom", "exs", "alts", "exp", "qp"],
+               "labels": ["Part No.", "Part Name", "Make", "MPN", "BOM / Stn", "Existing supplier", "Alternate supplier",
+                          "Existing ₹", "Quoted ₹"],
+               "types": {"bom": "number", "exp": "number", "qp": "number"}, "renumber": None, "label_col": "name",
+               "required": [], "unique": "pn", "title": "Teknic parts"},
+}
+TYPE_NAMES = {"Text": "text", "Number": "number", "Date": "date"}
+
+
+def tmeta(d, t):
+    """Column order, labels and user-added columns for table t (stored in the data, so it is saved and shared)."""
+    td = TABLE_DEFS[t]
+    m = d.setdefault("meta", {}).setdefault(t, {})
+    m.setdefault("custom", {})
+    labels = m.setdefault("labels", {})
+    base = d[t][0] if t in ("mqis", "ds6") else td["labels"]
+    for i, cid in enumerate(td["core"]):
+        if blank(labels.get(cid)):
+            labels[cid] = base[i] if i < len(base) and not blank(base[i]) else cid
+    order = [c for c in m.get("order", []) if c in td["core"] or c in m["custom"]]
+    for cid in td["core"] + list(m["custom"]):
+        if cid not in order:
+            order.append(cid)
+    m["order"] = order
+    m.setdefault("renumber", td["renumber"] is not None)
+    m["hidden"] = [c for c in m.get("hidden", []) if c in td["core"]]
+    return m
+
+
+def vis(m):
+    """Columns shown (display order minus hidden built-in columns)."""
+    return [c for c in m["order"] if c not in m["hidden"]]
+
+
+def _ctype(m, t, cid):
+    return m["custom"].get(cid) or TABLE_DEFS[t]["types"].get(cid, "text")
+
+
+def _row_to_rec(row, core):
+    rec = {c: (row[i] if i < len(row) else None) for i, c in enumerate(core)}
+    if len(row) > len(core) and isinstance(row[len(core)], dict):
+        rec.update(row[len(core)])
+    return rec
+
+
+def _rec_to_row(rec, core, custom):
+    row = [rec.get(c) for c in core]
+    ex = {c: rec.get(c) for c in custom if not blank(rec.get(c))}
+    return row + [ex] if ex else row
+
+
+def recs_v(rec, cid):
+    return rec.get(cid)
+
+
+def _to_cell(v, typ):
+    if typ == "number":
+        return num(v)
+    if typ == "date":
+        return to_date(v)
+    return None if blank(v) else (str(int(v)) if isinstance(v, float) and v.is_integer() else str(v))
+
+
+def _from_cell(v, typ):
+    if blank(v):
+        return None
+    if typ == "number":
+        n = num(v)
+        return int(n) if n is not None and float(n).is_integer() else n
+    if typ == "date":
+        return iso(v)
+    return str(v).strip()
+
+
+def spec_parts(key):
+    core = TABLE_DEFS[key]["core"]
+
+    def get():
+        return [_row_to_rec(r, core) for r in D()[key][1]]
+
+    def put(recs):
+        custom = tmeta(D(), key)["custom"]
+        D()[key][1] = [_rec_to_row(r, core, custom) for r in recs]
+    return {"t": key, "key": key, "get": get, "set": put}
+
+
+def spec_acts(pi):
+    core = TABLE_DEFS["acts"]["core"]
+
+    def get():
+        return [_row_to_rec(a, core) for a in D()["projects"][pi]["acts"]]
+
+    def put(recs):
+        custom = tmeta(D(), "acts")["custom"]
+        D()["projects"][pi]["acts"] = [_rec_to_row(r, core, custom) for r in recs]
+    return {"t": "acts", "key": f"acts_{pi}", "get": get, "set": put}
+
+
+def spec_teknic():
+    def get():
+        return [dict(p) for p in D()["tk"]["parts"]]
+
+    def put(recs):
+        D()["tk"]["parts"] = [{k: v for k, v in r.items() if not blank(v) or k in TABLE_DEFS["teknic"]["core"]} for r in recs]
+    return {"t": "teknic", "key": "teknic", "get": get, "set": put}
+
+
+def _bump(spec):
+    k = f"ver_{spec['key']}"
+    st.session_state[k] = st.session_state.get(k, 0) + 1
+
+
+def _validate(t, recs):
+    u = TABLE_DEFS[t]["unique"]
+    if not u:
+        return None
+    seen = {}
+    for i, r in enumerate(recs):
+        v = part_no(r.get(u))
+        if v is None:
+            continue
+        r[u] = v
+        if str(v) in seen:
+            return f"Not saved: {TABLE_DEFS[t]['title']} — No. {v} is already in row {seen[str(v)] + 1}. Use a different number."
+        seen[str(v)] = i
+    return None
+
+
+def _renumber(t, recs):
+    f = TABLE_DEFS[t]["renumber"]
+    if f:
+        for i, r in enumerate(recs):
+            r[f] = i + 1
+
+
+def _finish(spec, recs, structural, msg):
+    d = D()
+    t = spec["t"]
+    err = _validate(t, recs)
+    if err:
+        st.session_state.flash_err = err
+        _bump(spec)
+        return False
+    if structural and tmeta(d, t).get("renumber"):
+        _renumber(t, recs)
+    spec["set"](recs)
+    commit(msg)
+    _bump(spec)
+    return True
+
+
+def _apply_editor(spec, ek):
+    """Auto-save: called by Streamlit on every change in the table."""
+    state = st.session_state.get(ek) or {}
+    d = D()
+    t = spec["t"]
+    m = tmeta(d, t)
+    lab2id = {m["labels"][c]: c for c in m["order"]}
+    recs = spec["get"]()
+    edited = state.get("edited_rows") or {}
+    for idx, ch in edited.items():
+        i = int(idx)
+        if i < len(recs):
+            for lab, v in ch.items():
+                cid = lab2id.get(lab)
+                if cid:
+                    recs[i][cid] = _from_cell(v, _ctype(m, t, cid))
+    deleted = sorted((int(i) for i in (state.get("deleted_rows") or [])), reverse=True)
+    for i in deleted:
+        if i < len(recs):
+            recs.pop(i)
+    added = 0
+    for a in state.get("added_rows") or []:
+        rec = {}
+        for lab, v in a.items():
+            cid = lab2id.get(lab)
+            if cid:
+                rec[cid] = _from_cell(v, _ctype(m, t, cid))
+        if any(not blank(v) for v in rec.values()):
+            recs.append(rec)
+            added += 1
+    if not (edited or deleted or added):
+        return  # e.g. an empty new row: keep it on screen until something is typed
+    what = "edited" if edited and not (deleted or added) else "rows added/removed" if not edited else "updated"
+    _finish(spec, recs, bool(deleted or added), f"{TABLE_DEFS[t]['title'].capitalize()} {what}")
+
+
+def _row_op(spec, op):
+    recs = spec["get"]()
+    sk = f"rowsel_{spec['key']}"
+    i = min(st.session_state.get(sk, 0) or 0, max(len(recs) - 1, 0))
+    t = spec["t"]
+    new = i
+    if op == "add_first" or not recs:
+        recs.append({})
+        new = len(recs) - 1
+    elif op == "up" and i > 0:
+        recs[i - 1], recs[i] = recs[i], recs[i - 1]
+        new = i - 1
+    elif op == "down" and i < len(recs) - 1:
+        recs[i + 1], recs[i] = recs[i], recs[i + 1]
+        new = i + 1
+    elif op == "top":
+        recs.insert(0, recs.pop(i))
+        new = 0
+    elif op == "bottom":
+        recs.append(recs.pop(i))
+        new = len(recs) - 1
+    elif op == "goto":
+        target = int(st.session_state.get(f"goto_{spec['key']}", i + 1) or 1) - 1
+        target = max(0, min(target, len(recs) - 1))
+        recs.insert(target, recs.pop(i))
+        new = target
+    elif op == "above":
+        recs.insert(i, {})
+        new = i
+    elif op == "below":
+        recs.insert(i + 1, {})
+        new = i + 1
+    elif op == "dup":
+        c = copy.deepcopy(recs[i])
+        u = TABLE_DEFS[t]["unique"]
+        if u:
+            c[u] = None  # numbers must stay unique: fill the new one in
+        recs.insert(i + 1, c)
+        new = i + 1
+    elif op == "delete":
+        if not st.session_state.get(f"delconf_{spec['key']}"):
+            st.session_state.flash_err = "Tick 'Confirm delete' first."
+            return
+        recs.pop(i)
+        new = max(0, i - 1)
+        st.session_state[f"delconf_{spec['key']}"] = False
+    st.session_state[sk] = new
+    names = {"up": "moved up", "down": "moved down", "top": "moved to top", "bottom": "moved to bottom", "goto": "moved",
+             "above": "inserted", "below": "inserted", "dup": "duplicated", "delete": "deleted", "add_first": "added"}
+    _finish(spec, recs, True, f"Row {names.get(op, op)}")
+
+
+def _col_op(spec, op):
+    d = D()
+    t = spec["t"]
+    m = tmeta(d, t)
+    k = spec["key"]
+    order = m["order"]
+    shown = vis(m)
+    j = min(st.session_state.get(f"colsel_{k}", 0) or 0, len(shown) - 1)
+    cid = shown[j]
+    msg = None
+    if op in ("left", "right"):
+        nb = j - 1 if op == "left" else j + 1
+        if 0 <= nb < len(shown):
+            a, b = order.index(cid), order.index(shown[nb])
+            order[a], order[b] = order[b], order[a]
+            st.session_state[f"colsel_{k}"] = nb
+            msg = f"Column moved {op}"
+    elif op == "hide":
+        if cid in m["custom"]:
+            return
+        m["hidden"].append(cid)
+        st.session_state[f"colsel_{k}"] = max(0, j - 1)
+        msg = f'Column "{m["labels"][cid]}" hidden'
+    elif op == "show":
+        c = st.session_state.get(f"unhide_{k}")
+        if c in m["hidden"]:
+            m["hidden"].remove(c)
+            msg = f'Column "{m["labels"][c]}" shown'
+    elif op == "rename":
+        new = (st.session_state.get(f"colname_{k}") or "").strip()
+        if not new:
+            st.session_state.flash_err = "Type the new column name first."
+            return
+        if any(m["labels"][c].lower() == new.lower() for c in order if c != cid):
+            st.session_state.flash_err = f'A column named "{new}" already exists.'
+            return
+        m["labels"][cid] = new
+        if t in ("mqis", "ds6") and cid in TABLE_DEFS[t]["core"]:
+            d[t][0][TABLE_DEFS[t]["core"].index(cid)] = new
+        st.session_state[f"colname_{k}"] = ""
+        msg = f'Column renamed to "{new}"'
+    elif op == "insert":
+        new = (st.session_state.get(f"newcol_{k}") or "").strip()
+        if not new:
+            st.session_state.flash_err = "Type a name for the new column."
+            return
+        if any(m["labels"][c].lower() == new.lower() for c in order):
+            st.session_state.flash_err = f'A column named "{new}" already exists.'
+            return
+        nid = _slug(new, set(order) | set(m["custom"]))
+        m["custom"][nid] = TYPE_NAMES.get(st.session_state.get(f"newtype_{k}", "Text"), "text")
+        m["labels"][nid] = new
+        at = order.index(cid)
+        before = st.session_state.get(f"newpos_{k}", "After") == "Before"
+        order.insert(at if before else at + 1, nid)
+        st.session_state[f"colsel_{k}"] = j if before else j + 1
+        st.session_state[f"newcol_{k}"] = ""
+        msg = f'Column "{new}" added'
+    elif op == "delete":
+        if cid not in m["custom"]:
+            st.session_state.flash_err = "Built-in columns can be renamed or moved, but not deleted."
+            return
+        if not st.session_state.get(f"coldelconf_{k}"):
+            st.session_state.flash_err = "Tick 'Confirm delete' first."
+            return
+        lab = m["labels"].pop(cid, cid)
+        m["custom"].pop(cid, None)
+        order.remove(cid)
+        if t == "acts":  # same columns in every project
+            for p in d["projects"]:
+                for a in p["acts"]:
+                    if len(a) > 5 and isinstance(a[5], dict):
+                        a[5].pop(cid, None)
+        elif t == "teknic":
+            for p in d["tk"]["parts"]:
+                p.pop(cid, None)
+        else:
+            n = len(TABLE_DEFS[t]["core"])
+            for r in d[t][1]:
+                if len(r) > n and isinstance(r[n], dict):
+                    r[n].pop(cid, None)
+        st.session_state[f"colsel_{k}"] = max(0, j - 1)
+        st.session_state[f"coldelconf_{k}"] = False
+        msg = f'Column "{lab}" deleted'
+    if msg:
+        commit(msg)
+        _bump(spec)
+
+
+def _set_renumber(spec):
+    tmeta(D(), spec["t"])["renumber"] = bool(st.session_state.get(f"renum_{spec['key']}"))
+    commit("Auto-numbering " + ("on" if tmeta(D(), spec["t"])["renumber"] else "off"))
+
+
+def render_table(spec, computed=None, colcfg_extra=None, height=None, help_text=None):
+    """Editable table with auto-save + row and column tools. computed(rec) -> {label: value} adds read-only columns."""
+    d = D()
+    t, k = spec["t"], spec["key"]
+    td = TABLE_DEFS[t]
+    m = tmeta(d, t)
+    recs = spec["get"]()
+    order = vis(m)
+    labels = [m["labels"][c] for c in order]
+    data = [[_to_cell(r.get(c), _ctype(m, t, c)) for c in order] for r in recs]
+    df = pd.DataFrame(data, columns=labels)
+    comp_cols = []
+    if computed:
+        extra = [computed(r) for r in recs]
+        comp_cols = list(computed({}).keys()) if not extra else list(extra[0].keys())
+        for c in comp_cols:
+            df[c] = [e.get(c) for e in extra]
+    cfg = {}
+    for c, lab in zip(order, labels):
+        typ = _ctype(m, t, c)
+        if typ == "number":
+            df[lab] = pd.to_numeric(df[lab], errors="coerce")
+            cfg[lab] = st.column_config.NumberColumn(format="₹ %.2f" if c in ("price", "exp", "qp") else None)
+        elif typ == "date":
+            cfg[lab] = st.column_config.DateColumn(format="DD MMM YY")
+        else:
+            df[lab] = df[lab].astype(object)
+            cfg[lab] = st.column_config.TextColumn(width="large" if c in ("activity", "remarks", "partname", "name") else None)
+    for c, conf in (colcfg_extra or {}).items():
+        if c in order:
+            cfg[m["labels"][c]] = conf
+    ek = f"ed_{k}_{st.session_state.get(f'ver_{k}', 0)}"
+    bar = st.columns([6, 1.2, 1.4])
+    bar[0].caption(help_text or "Changes save automatically. Use **Rows** to insert, move or delete rows anywhere, "
+                               "and **Columns** to add, move, rename or delete columns.")
+    with bar[1].popover("↕ Rows", use_container_width=True):
+        _row_tools(spec, recs, td)
+    with bar[2].popover("⇆ Columns", use_container_width=True):
+        _col_tools(spec, m, td)
+    st.data_editor(df, key=ek, num_rows="dynamic", hide_index=True, width="stretch", height=height or "auto",
+                   column_config=cfg, disabled=comp_cols, on_change=_apply_editor, args=(spec, ek))
+
+
+def _row_tools(spec, recs, td):
+    k = spec["key"]
+    if not recs:
+        st.caption("The table is empty.")
+        st.button("➕ Add first row", key=f"addfirst_{k}", on_click=_row_op, args=(spec, "add_first"))
+        return
+    sk = f"rowsel_{k}"
+    if (st.session_state.get(sk) or 0) >= len(recs):
+        st.session_state[sk] = len(recs) - 1
+    lc = td["label_col"]
+    st.selectbox("Row", list(range(len(recs))), key=sk,
+                 format_func=lambda i: f"{i + 1}. {str(recs[i].get(lc) or '(blank)')[:48]}")
+    c = st.columns(2)
+    c[0].button("⬆ Move up", key=f"up_{k}", on_click=_row_op, args=(spec, "up"), use_container_width=True)
+    c[1].button("⬇ Move down", key=f"down_{k}", on_click=_row_op, args=(spec, "down"), use_container_width=True)
+    c = st.columns(2)
+    c[0].button("⤒ To top", key=f"top_{k}", on_click=_row_op, args=(spec, "top"), use_container_width=True)
+    c[1].button("⤓ To bottom", key=f"bot_{k}", on_click=_row_op, args=(spec, "bottom"), use_container_width=True)
+    c = st.columns([1, 1])
+    c[0].number_input("Move to position", min_value=1, max_value=len(recs), step=1, key=f"goto_{k}")
+    c[1].button("Move", key=f"gobtn_{k}", on_click=_row_op, args=(spec, "goto"), use_container_width=True)
+    st.divider()
+    c = st.columns(2)
+    c[0].button("➕ Insert above", key=f"above_{k}", on_click=_row_op, args=(spec, "above"), use_container_width=True)
+    c[1].button("➕ Insert below", key=f"below_{k}", on_click=_row_op, args=(spec, "below"), use_container_width=True)
+    st.button("⧉ Duplicate row", key=f"dup_{k}", on_click=_row_op, args=(spec, "dup"), use_container_width=True)
+    st.divider()
+    st.checkbox("Confirm delete", key=f"delconf_{k}")
+    st.button("🗑 Delete row", key=f"del_{k}", on_click=_row_op, args=(spec, "delete"), use_container_width=True)
+    if td["renumber"]:
+        st.divider()
+        st.session_state.setdefault(f"renum_{k}", tmeta(D(), spec["t"]).get("renumber", True))
+        st.checkbox(f"Auto-number the {'Step' if td['renumber'] == 'step' else 'Sl.No'} column after insert / move / delete",
+                    key=f"renum_{k}", on_change=_set_renumber, args=(spec,))
+
+
+def _col_tools(spec, m, td):
+    k = spec["key"]
+    order = vis(m)
+    ck = f"colsel_{k}"
+    if (st.session_state.get(ck) or 0) >= len(order):
+        st.session_state[ck] = len(order) - 1
+    st.selectbox("Column", list(range(len(order))), key=ck, format_func=lambda j: m["labels"][order[j]])
+    j = st.session_state.get(ck) or 0
+    c = st.columns(2)
+    c[0].button("◀ Move left", key=f"cl_{k}", on_click=_col_op, args=(spec, "left"), use_container_width=True)
+    c[1].button("Move right ▶", key=f"cr_{k}", on_click=_col_op, args=(spec, "right"), use_container_width=True)
+    st.text_input("Rename selected column to", key=f"colname_{k}")
+    st.button("✏️ Rename", key=f"cren_{k}", on_click=_col_op, args=(spec, "rename"), use_container_width=True)
+    st.divider()
+    st.text_input("New column name", key=f"newcol_{k}")
+    c = st.columns(2)
+    c[0].radio("Type", list(TYPE_NAMES), key=f"newtype_{k}", horizontal=False)
+    c[1].radio("Insert", ["Before", "After"], index=1, key=f"newpos_{k}", horizontal=False)
+    st.button("➕ Insert column next to selected", key=f"cins_{k}", on_click=_col_op, args=(spec, "insert"),
+              use_container_width=True)
+    st.divider()
+    if order[j] in m["custom"]:
+        st.checkbox("Confirm delete", key=f"coldelconf_{k}")
+        st.button("🗑 Delete selected column", key=f"cdel_{k}", on_click=_col_op, args=(spec, "delete"), use_container_width=True)
+    else:
+        st.button("🙈 Hide selected column", key=f"chide_{k}", on_click=_col_op, args=(spec, "hide"), use_container_width=True)
+        st.caption("Built-in column: it can be renamed, moved or hidden, not deleted.")
+    if m["hidden"]:
+        st.selectbox("Hidden columns", m["hidden"], key=f"unhide_{k}", format_func=lambda c: m["labels"][c])
+        st.button("👁 Show again", key=f"cshow_{k}", on_click=_col_op, args=(spec, "show"), use_container_width=True)
+
+
+def _rename_activity(scope_pi):
+    d = D()
+    old = st.session_state.get("ren_old")
+    new = (st.session_state.get("ren_new") or "").strip()
+    if not old or not new:
+        st.session_state.flash_err = "Pick the activity and type the new name."
+        return
+    allp = st.session_state.get("ren_scope", "This project only") == "All projects"
+    n = 0
+    for i, p in enumerate(d["projects"]):
+        if allp or i == scope_pi:
+            for a in p["acts"]:
+                if (a[1] or "").strip() == old:
+                    a[1] = new
+                    n += 1
+    if allp:
+        d["stdActs"] = [new if x == old else x for x in (d.get("stdActs") or [])]
+    st.session_state["ren_new"] = ""
+    commit(f'Renamed "{old}" → "{new}" in {n} place(s)')
+
+
+def _move_project(pi, delta):
+    d = D()
+    j = pi + delta
+    if 0 <= j < len(d["projects"]):
+        d["projects"][pi], d["projects"][j] = d["projects"][j], d["projects"][pi]
+        commit("Project order changed")
 
 
 # ----------------------------------------------------------------------------------------------
@@ -1146,7 +1790,7 @@ def page_dashboard():
 def page_projects():
     d = D()
     header("Project Tracking — Alternate Development",
-           "Stage-gate activities per project. Edit dates and remarks directly in the table, then click Save changes.")
+           "Stage-gate activities per project. Every change saves automatically.")
     with st.expander("➕ Add project", expanded=not d["projects"]):
         with st.form("add_project", clear_on_submit=True):
             c1, c2 = st.columns([3, 1])
@@ -1208,30 +1852,21 @@ def page_projects():
                                     "Actual Date": st.column_config.DateColumn(format="DD MMM YY")})
         st.caption("Clear the status filter to edit activities.")
     else:
-        edited = st.data_editor(
-            df, key=f"acts_{pi}_{len(p['acts'])}", hide_index=True, width="stretch", num_rows="dynamic",
-            disabled=["Status", "Days Late"],
-            column_config={
-                "Step": st.column_config.NumberColumn(format="%d", width="small"),
-                "Activity": st.column_config.TextColumn(width="large", required=True),
-                "Plan Date": st.column_config.DateColumn(format="DD MMM YY"),
-                "Actual Date": st.column_config.DateColumn(format="DD MMM YY"),
-                "Status": st.column_config.TextColumn(help="Calculated: Done / Delayed / Due in 7 days / Open"),
-                "Days Late": st.column_config.NumberColumn(format="%d"),
-                "Remarks": st.column_config.TextColumn(width="large"),
-            })
-        if st.button("💾 Save changes", type="primary", key=f"save_acts_{pi}"):
-            new = []
-            for _, r in edited.iterrows():
-                if blank(r["Activity"]):
-                    continue
-                step = r["Step"]
-                step = int(step) if not blank(step) and float(step).is_integer() else (None if blank(step) else step)
-                new.append([step, str(r["Activity"]).strip(), iso(r["Plan Date"]), iso(r["Actual Date"]),
-                            None if blank(r["Remarks"]) else str(r["Remarks"])])
-            p["acts"] = new
-            commit(f"Activities updated — {p['name']}")
-            st.rerun()
+        def comp(rec):
+            a = [rec.get("step"), rec.get("activity"), rec.get("plan"), rec.get("actual"), rec.get("remarks")]
+            stt = activity_status(a)
+            return {"Status": stt, "Days Late": (today() - to_date(a[2])).days if stt == "Delayed" else None}
+        render_table(spec_acts(pi), computed=comp,
+                     help_text="Edit any cell; it saves automatically. Rename an activity by typing over it. "
+                               "**Rows**: insert in between, move, duplicate, delete. **Columns**: add, move, rename. "
+                               "Status and Days Late are calculated.")
+        with st.expander("🔤 Rename an activity in this project or in all projects"):
+            names = sorted({(a[1] or "").strip() for pp in d["projects"] for a in pp["acts"] if not blank(a[1])})
+            c1, c2 = st.columns(2)
+            c1.selectbox("Activity", names, key="ren_old")
+            c2.text_input("New name", key="ren_new")
+            st.radio("Apply to", ["This project only", "All projects"], horizontal=True, key="ren_scope")
+            st.button("Rename activity", on_click=_rename_activity, args=(pi,), type="primary")
 
     # timeline
     tl = df.dropna(subset=["Plan Date"]).copy()
@@ -1250,7 +1885,7 @@ def page_projects():
         fig.update_yaxes(autorange="reversed", title=None)
         st.plotly_chart(plot_layout(fig, 28 * max(len(tl), len(act)) + 140), width="stretch")
 
-    with st.expander("✏️ Edit project name / status, or delete project"):
+    with st.expander("✏️ Edit project name / status, change project order, or delete project"):
         with st.form(f"edit_proj_{pi}"):
             c1, c2 = st.columns([3, 1])
             nn = c1.text_input("Project / part name", value=p["name"])
@@ -1266,6 +1901,10 @@ def page_projects():
                     st.session_state.sel_project = p["name"]
                     commit("Project updated")
                     st.rerun()
+        c1, c2, _ = st.columns([1, 1, 3])
+        c1.button("⬆ Move project up", key=f"pup_{pi}", on_click=_move_project, args=(pi, -1), disabled=pi == 0)
+        c2.button("⬇ Move project down", key=f"pdn_{pi}", on_click=_move_project, args=(pi, 1),
+                  disabled=pi == len(d["projects"]) - 1)
         conf = st.checkbox(f'I want to delete "{p["name"]}" and all its activities', key=f"del_conf_{pi}")
         if st.button("🗑 Delete project", disabled=not conf, key=f"del_{pi}"):
             d["projects"].pop(pi)
@@ -1325,93 +1964,61 @@ def page_activities():
 def page_parts(key):
     d = D()
     cfg = PCFG[key]
-    hdr, rows = d[key]
-    header(cfg["label"], "Search, filter and sort below. Switch on Edit mode to add, change or delete parts.")
+    rows = d[key][1]
+    m = tmeta(d, key)
+    core = TABLE_DEFS[key]["core"]
+    header(cfg["label"], "Search, filter and sort below. Switch on Edit mode to add, insert, move or delete rows and columns.")
     if not rows and not st.session_state.get(f"edit_{key}"):
         st.info("No parts yet. Upload your Excel in Data Management, or switch on Edit mode to add parts.")
-    edit = st.toggle("✏️ Edit mode (add / edit / delete parts)", key=f"edit_{key}")
-    df = pd.DataFrame(rows, columns=hdr)
-    num_cols = [hdr[i] for i in cfg["num"]]
-    for c in df.columns:
-        if c in num_cols:
-            df[c] = pd.to_numeric(df[c], errors="coerce")
-        else:
-            df[c] = df[c].map(lambda v: None if blank(v) else str(v))
-    if not edit:
-        c1, c2, c3 = st.columns([3, 2, 2])
-        q = c1.text_input("Search part no, name, supplier, MPN…", key=f"q_{key}")
-        pf = []
-        if cfg["proj"] is not None:
-            pf = c2.multiselect("Project", sorted({str(r[cfg["proj"]]) for r in rows if not blank(r[cfg["proj"]])}), key=f"pf_{key}")
-        sup = c3.multiselect("Supplier", sorted({str(r[cfg["supplier"]]).strip() for r in rows if not blank(r[cfg["supplier"]])}), key=f"sf_{key}")
-        miss = st.checkbox("Only parts missing MPN or price", key=f"mf_{key}")
-        f = df.copy()
-        mask = pd.Series(True, index=f.index)
-        if q:
-            mask &= f.astype(str).apply(lambda col: col.str.contains(q, case=False, na=False)).any(axis=1)
-        if pf:
-            mask &= f[hdr[cfg["proj"]]].isin(pf)
-        if sup:
-            mask &= f[hdr[cfg["supplier"]]].astype(str).str.strip().isin(sup)
-        if miss:
-            mask &= [not (has_mpn(key, r) and has_price(key, r)) for r in rows]
-        f = f[mask]
-        st.caption(f"{len(f)} of {len(df)} parts")
-
-        def colour(row):
-            r = rows[row.name]
-            out = [""] * len(row)
-            if not has_mpn(key, r):
-                out[cfg["mpn"][0]] = f"background-color:{COLORS['bad_soft']}"
-            if not has_price(key, r):
-                out[cfg["price"]] = f"background-color:{COLORS['bad_soft']}"
-            return out
-        st.dataframe(f.style.apply(colour, axis=1), hide_index=True, width="stretch", height=560,
-                     column_config={hdr[cfg["price"]]: st.column_config.NumberColumn(format="₹ %.2f")})
-        st.caption("Red cells = missing MAKE/MPN or price.")
-    else:
-        colcfg = {h: (st.column_config.NumberColumn(format="₹ %.2f") if i == cfg["price"]
-                      else st.column_config.NumberColumn() if h in num_cols
-                      else st.column_config.TextColumn(required=(i in (1, 2)))) for i, h in enumerate(hdr)}
+    edit = st.toggle("✏️ Edit mode (changes save automatically)", key=f"edit_{key}")
+    if edit:
+        extra = {}
         if cfg["proj"] is not None:
             opts = sorted(set(PROJECT_CHOICES) | {str(r[cfg["proj"]]) for r in rows if not blank(r[cfg["proj"]])})
-            colcfg[hdr[cfg["proj"]]] = st.column_config.SelectboxColumn(options=opts)
-        st.caption("Add a row at the bottom (+), edit any cell, or select rows and press Delete. Sl.No is renumbered for new rows. "
-                   "MAKE/MPN format: MAKE/MPN.")
-        edited = st.data_editor(df, key=f"ed_{key}_{len(rows)}", num_rows="dynamic", hide_index=True,
-                                width="stretch", height=560, column_config=colcfg)
-        if st.button("💾 Save parts", type="primary", key=f"save_{key}"):
-            new, seen, err = [], {}, None
-            next_sl = max([int(num(r[0])) for r in rows if num(r[0]) is not None] or [0]) + 1
-            for i, (_, r) in enumerate(edited.iterrows()):
-                vals = [None if blank(v) else v for v in r.tolist()]
-                if all(v is None for v in vals):
-                    continue
-                pn = part_no(vals[1])
-                if pn is None or blank(vals[2]):
-                    err = f"Row {i + 1}: Part No and Part Name are required."
-                    break
-                if str(pn) in seen:
-                    err = f"Part No {pn} appears twice (rows {seen[str(pn)] + 1} and {i + 1}). Remove the duplicate."
-                    break
-                seen[str(pn)] = i
-                vals[1] = pn
-                for j in cfg["num"]:
-                    vals[j] = num(vals[j]) if vals[j] is not None else None
-                    if vals[j] is not None and float(vals[j]).is_integer() and j != cfg["price"]:
-                        vals[j] = int(vals[j])
-                if vals[0] is None:
-                    vals[0] = next_sl
-                    next_sl += 1
-                elif num(vals[0]) is not None and float(num(vals[0])).is_integer():
-                    vals[0] = int(num(vals[0]))
-                new.append([jsonable(v) for v in vals])
-            if err:
-                st.error(err)
-            else:
-                d[key][1] = new
-                commit(f"{cfg['label']} saved ({len(new)} parts)")
-                st.rerun()
+            extra["project"] = st.column_config.SelectboxColumn(options=opts)
+        render_table(spec_parts(key), colcfg_extra=extra, height=560,
+                     help_text="Edit any cell; it saves automatically. **Rows**: insert in between, move, duplicate, delete. "
+                               "**Columns**: add, move, rename. Part No must be unique. MAKE/MPN format: MAKE/MPN.")
+        return
+    recs = [_row_to_rec(r, core) for r in rows]
+    order = vis(m)
+    labs = [m["labels"][c] for c in order]
+    df = pd.DataFrame([[_to_cell(r.get(c), _ctype(m, key, c)) for c in order] for r in recs], columns=labs)
+    for c, lab in zip(order, labs):
+        if _ctype(m, key, c) == "number":
+            df[lab] = pd.to_numeric(df[lab], errors="coerce")
+    c1, c2, c3 = st.columns([3, 2, 2])
+    q = c1.text_input("Search part no, name, supplier, MPN…", key=f"q_{key}")
+    pf = []
+    if cfg["proj"] is not None:
+        pf = c2.multiselect("Project", sorted({str(r[cfg["proj"]]) for r in rows if not blank(r[cfg["proj"]])}), key=f"pf_{key}")
+    sup = c3.multiselect("Supplier", sorted({str(r[cfg["supplier"]]).strip() for r in rows if not blank(r[cfg["supplier"]])}), key=f"sf_{key}")
+    miss = st.checkbox("Only parts missing MPN or price", key=f"mf_{key}")
+    mask = pd.Series(True, index=df.index)
+    if q:
+        mask &= df.astype(str).apply(lambda col: col.str.contains(q, case=False, na=False)).any(axis=1)
+    if pf:
+        mask &= pd.Series([str(r[cfg["proj"]]) in pf for r in rows], index=df.index)
+    if sup:
+        mask &= pd.Series([str(r[cfg["supplier"]]).strip() in sup for r in rows], index=df.index)
+    if miss:
+        mask &= pd.Series([not (has_mpn(key, r) and has_price(key, r)) for r in rows], index=df.index)
+    f = df[mask]
+    st.caption(f"{len(f)} of {len(df)} parts")
+    mpn_pos = order.index(core[cfg["mpn"][0]]) if core[cfg["mpn"][0]] in order else None
+    price_pos = order.index(core[cfg["price"]]) if core[cfg["price"]] in order else None
+
+    def colour(row):
+        r = rows[row.name]
+        out = [""] * len(row)
+        if mpn_pos is not None and not has_mpn(key, r):
+            out[mpn_pos] = f"background-color:{COLORS['bad_soft']}"
+        if price_pos is not None and not has_price(key, r):
+            out[price_pos] = f"background-color:{COLORS['bad_soft']}"
+        return out
+    st.dataframe(f.style.apply(colour, axis=1), hide_index=True, width="stretch", height=560,
+                 column_config={labs[price_pos]: st.column_config.NumberColumn(format="₹ %.2f")} if price_pos is not None else None)
+    st.caption("Red cells = missing MAKE/MPN or price.")
 
 
 def page_suppliers():
@@ -1621,38 +2228,11 @@ def page_teknic():
             t["stations"] = stn
             commit("Station volume updated")
             st.rerun()
-    cols = ["Part No.", "Part Name", "Make", "MPN", "BOM / Stn", "Existing supplier", "Alternate supplier", "Existing ₹", "Quoted ₹"]
-    df = pd.DataFrame([[None if blank(p.get("pn")) else str(p.get("pn")), p.get("name"), p.get("make"), p.get("mpn"),
-                        num(p.get("bom")), p.get("exs"), p.get("alts"), num(p.get("exp")), num(p.get("qp"))] for p in t["parts"]],
-                      columns=cols)
-    st.markdown('<div class="section">Parts — edit inputs here (add rows with +)</div>', unsafe_allow_html=True)
-    edited = st.data_editor(df, key=f"tk_{len(t['parts'])}", num_rows="dynamic", hide_index=True, width="stretch",
-                            column_config={"Existing ₹": st.column_config.NumberColumn(format="₹ %.2f"),
-                                           "Quoted ₹": st.column_config.NumberColumn(format="₹ %.2f"),
-                                           "Part No.": st.column_config.TextColumn(required=True),
-                                           "Part Name": st.column_config.TextColumn(required=True)})
-    if st.button("💾 Save Teknic parts", type="primary"):
-        new, seen, err = [], set(), None
-        for i, (_, r) in enumerate(edited.iterrows()):
-            v = [None if blank(x) else x for x in r.tolist()]
-            if all(x is None for x in v):
-                continue
-            if v[0] is None or v[1] is None or v[7] is None or v[8] is None:
-                err = f"Row {i + 1}: Part No, Part Name, Existing ₹ and Quoted ₹ are required."
-                break
-            pn = part_no(v[0])
-            if str(pn) in seen:
-                err = f"Part No {pn} is in the table twice."
-                break
-            seen.add(str(pn))
-            new.append({"pn": pn, "name": v[1], "make": v[2], "mpn": v[3], "bom": num(v[4]), "exs": v[5], "alts": v[6],
-                        "exp": num(v[7]), "qp": num(v[8])})
-        if err:
-            st.error(err)
-        else:
-            t["parts"] = new
-            commit(f"Teknic parts saved ({len(new)})")
-            st.rerun()
+    st.markdown('<div class="section">Parts — edit inputs here (changes save automatically)</div>', unsafe_allow_html=True)
+    render_table(spec_teknic(),
+                 help_text="Edit any cell; it saves automatically. **Rows**: insert in between, move, duplicate, delete. "
+                           "**Columns**: add, move, rename. Savings below recalculate.")
+    c = teknic_calc(D()["tk"])
     if c["rows"]:
         st.markdown('<div class="section">Savings (calculated)</div>', unsafe_allow_html=True)
         out = pd.DataFrame([{"Part No.": p["pn"], "Part Name": p["name"], "BOM / Stn": p.get("bom"), "Existing ₹": p.get("exp"),
