@@ -1221,7 +1221,15 @@ def tmeta(d, t):
             order.append(cid)
     m["order"] = order
     m.setdefault("renumber", td["renumber"] is not None)
-    m["hidden"] = [c for c in m.get("hidden", []) if c in td["core"]]
+    # The name column (Activity / Part Name) and the step / Sl No column must always be visible.
+    keep = {td["label_col"], td["renumber"]} - {None}
+    m["hidden"] = [c for c in m.get("hidden", []) if c in td["core"] and c not in keep]
+    if t == "acts":  # keep Step and Activity to the left of Plan Date
+        o = m["order"]
+        for cid in ("activity", "step"):
+            if cid in o and "plan" in o and o.index(cid) > o.index("plan"):
+                o.remove(cid)
+                o.insert(o.index("plan") if cid == "activity" else o.index("activity"), cid)
     return m
 
 
@@ -1401,7 +1409,7 @@ function updateComputed(a){if(!table||!a.computed)return;const cols=table.option
   finally{table.ignoreEvents=false;table.ignoreHistory=false;}}
 function build(a){lastSel=null;const el=$("sheet");if(table){try{jspreadsheet.destroy(el,true);}catch(e){}table=null;}el.innerHTML="";
   table=jspreadsheet(el,{data:a.data.length?a.data:[a.columns.map(()=>"")],columns:a.columns,tableOverflow:true,
-   tableHeight:a.height+"px",tableWidth:(document.body.clientWidth-4)+"px",rowDrag:true,columnDrag:true,columnSorting:false,
+   tableHeight:a.height+"px",tableWidth:Math.max(document.documentElement.clientWidth||0,window.innerWidth||0,320)-4+"px",rowDrag:true,columnDrag:true,columnSorting:false,
    allowInsertRow:true,allowDeleteRow:true,allowInsertColumn:true,allowDeleteColumn:true,allowRenameColumn:true,
    allowManualInsertRow:true,allowManualInsertColumn:true,wordWrap:false,
    onselection:(el,x1,y1,x2,y2)=>{lastSel={x1:+Math.min(x1,x2),y1:+Math.min(y1,y2),x2:+Math.max(x1,x2),y2:+Math.max(y1,y2)};},
@@ -1409,7 +1417,9 @@ function build(a){lastSel=null;const el=$("sheet");if(table){try{jspreadsheet.de
    onbeforechange:(el,cell,x,y,v)=>{if(isLocked(+x)&&String(table.options.columns[+x].name).startsWith("__comp_"))return false;},
    onchange:changed,oninsertrow:changed,ondeleterow:changed,oninsertcolumn:changed,ondeletecolumn:changed,onmoverow:changed,
    onmovecolumn:changed,onchangeheader:changed,onundo:changed,onredo:changed,onpaste:changed,onsort:changed});
-  $("b-ren").style.display=a.renumber?"":"none";}
+  $("b-ren").style.display=a.renumber?"":"none";
+  [50,300,1000,2500].forEach(t=>setTimeout(height,t));}
+function fitWidth(){const c=document.querySelector(".jexcel_content");if(c){c.style.width=(Math.max(window.innerWidth,320)-4)+"px";}height();}
 $("b-undo").onclick=()=>{table&&table.undo();};$("b-redo").onclick=()=>{table&&table.redo();};
 $("b-rowa").onclick=()=>{if(!table)return;const s=sel();table.insertRow(1,s?s.y1:0,true);};
 $("b-rowb").onclick=()=>{if(!table)return;const s=sel();table.insertRow(1,s?s.y2:table.rows.length-1,false);};
@@ -1420,7 +1430,8 @@ window.addEventListener("message",e=>{const d=e.data;if(!d||d.type!=="streamlit:
   if(typeof jspreadsheet==="undefined"){status("Spreadsheet library could not load (no internet?).",true);height();return;}
   if(!table||args.rev!==rev){build(args);rev=args.rev;}else{updateComputed(args);}
   if(args.status)status(args.status,args.status_err);else if($("st").textContent==="Saving…")status("Saved");height();});
-window.addEventListener("resize",height);
+window.addEventListener("resize",fitWidth);
+setTimeout(()=>{if(typeof jspreadsheet==="undefined"){status("Spreadsheet library could not load. Check internet / firewall, then reload.",true);height();}},6000);
 post("streamlit:componentReady",{apiVersion:1});
 </script></body></html>"""
 
@@ -1556,6 +1567,23 @@ def excel_grid(spec, computed=None, dropdowns=None, height=460, help_text=None):
     td = TABLE_DEFS[spec["t"]]
     val = _grid_component()(rev=ss[f"grev_{k}"], columns=columns, data=data, computed=comp_rows, height=height,
                             renumber=td["renumber"], status=err or "", status_err=bool(err), key=f"grid_{k}", default=None)
+    hid = tmeta(D(), spec["t"])["hidden"]
+    if hid:
+        mh = tmeta(D(), spec["t"])
+        c1, c2 = st.columns([4, 1])
+        c1.caption("Hidden columns: " + ", ".join(mh["labels"].get(c, c) for c in hid))
+        if c2.button("Show hidden columns", key=f"unhide_{k}"):
+            mh["hidden"] = []
+            commit(f"{td['title'].capitalize()}: hidden columns restored")
+            _bump(spec)
+            st.rerun()
+    with st.expander("Grid not showing? View the data as a plain table"):
+        plain = pd.DataFrame([row[:len(columns)] for row in data], columns=[c["title"] for c in columns]) if data else pd.DataFrame(
+            columns=[c["title"] for c in columns])
+        plain = plain[[c["title"] for c in columns if c.get("type") != "hidden"]]
+        st.dataframe(plain.astype(str).replace({"": None}), hide_index=True, width="stretch")
+        st.caption("The editable grid loads from the internet (cdn.jsdelivr.net). If it stays blank, a firewall or "
+                   "browser extension may be blocking it.")
     if val and val.get("nonce") != ss.get(f"gnonce_{k}") and val.get("rev") == ss[f"grev_{k}"]:
         ss[f"gnonce_{k}"] = val.get("nonce")
         ok, msg = _grid_apply(spec, val)
