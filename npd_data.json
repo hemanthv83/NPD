@@ -1,6 +1,6 @@
 {
  "app": "NPD Sourcing Tracker",
- "savedAt": "2026-11-17T06:07:13",
+ "savedAt": "2026-11-17T06:16:19",
  "data": {
   "mqis": [
    [
@@ -895,7 +895,7 @@
       1,
       "Alternate change (trigger / start)",
       "2026-01-13",
-      null,
+      "2026-11-17",
       "We are having higher rejection rate and quality issues in existing DLS make from Vaishno Tradelink."
      ],
      [
@@ -2903,10 +2903,34 @@
      "actual"
     ],
     "renumber": true,
-    "hidden": [
-     "step",
-     "activity"
-    ]
+    "hidden": []
+   },
+   "teknic": {
+    "custom": {},
+    "labels": {
+     "pn": "Part No.",
+     "name": "Part Name",
+     "make": "Make",
+     "mpn": "MPN",
+     "bom": "BOM / Stn",
+     "exs": "Existing supplier",
+     "alts": "Alternate supplier",
+     "exp": "Existing ₹",
+     "qp": "Quoted ₹"
+    },
+    "order": [
+     "pn",
+     "name",
+     "make",
+     "mpn",
+     "bom",
+     "exs",
+     "alts",
+     "exp",
+     "qp"
+    ],
+    "renumber": false,
+    "hidden": []
    }
   }
  }
