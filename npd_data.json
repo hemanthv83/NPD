@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-25T10:01:53",
+ "savedAt": "2026-11-25T10:02:13",
  "data": {
   "mqis": [
    [
@@ -3845,8 +3845,40 @@
     "remarks": null
    }
   ],
-  "emails": [],
-  "email_log": [],
+  "emails": [
+   {
+    "id": "c9d332e050",
+    "type": "PO approval",
+    "ref": "SMPLF2710392",
+    "supplier": "AVVAD TECHNOLOGIES PVT LTD",
+    "to": "",
+    "cc": "",
+    "subject": "Purchase Order SMPLF2710392 – Acknowledgement and Delivery Confirmation",
+    "body": "Dear AVVAD TECHNOLOGIES PVT LTD Team,\n\nGreetings from Sun Mobility!\n\nPurchase Order SMPLF2710392 has been released to you. The PO copy will follow separately.\n\nPO details:\n  1. CONE003258 – 1KV UPS - NUMERIC | Qty: \n\nKindly acknowledge the order and confirm the expected delivery date (ETA) at the earliest.\n\nPlease ensure the material is delivered as per the agreed specifications and commercial terms.\n\nRegards,\nNPD Team\nSun Mobility",
+    "attachments": [],
+    "status": "Draft",
+    "created": "2026-11-25T10:02:13",
+    "updated": null,
+    "sent_at": null,
+    "method": null,
+    "error": null,
+    "source": "manual"
+   }
+  ],
+  "email_log": [
+   {
+    "at": "2026-11-25T10:02:13",
+    "event": "Draft created",
+    "email_id": "c9d332e050",
+    "type": "PO approval",
+    "ref": "SMPLF2710392",
+    "supplier": "AVVAD TECHNOLOGIES PVT LTD",
+    "to": "",
+    "cc": "",
+    "subject": "Purchase Order SMPLF2710392 – Acknowledgement and Delivery Confirmation",
+    "detail": "manual"
+   }
+  ],
   "settings": {
    "company": "Sun Mobility",
    "team": "NPD Team",
