@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-25T09:56:11",
+ "savedAt": "2026-11-25T09:56:21",
  "data": {
   "mqis": [
    [
@@ -3372,7 +3372,7 @@
    },
    {
     "_id": "9763891fc2",
-    "sl": 195,
+    "sl": 1,
     "part_no": "2040220169",
     "description": "EMERGENCY SWITCH COVER",
     "p1r5_qty": 1,
@@ -3388,7 +3388,7 @@
    },
    {
     "_id": "99d028857c",
-    "sl": 203,
+    "sl": 1,
     "part_no": "2040220078",
     "description": "ETHERNET S/W",
     "p1r5_qty": 1,
