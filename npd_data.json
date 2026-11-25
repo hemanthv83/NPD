@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-25T10:01:26",
+ "savedAt": "2026-11-25T10:01:48",
  "data": {
   "mqis": [
    [
@@ -3066,12 +3066,12 @@
   "rfq": [],
   "pos": [
    {
-    "_id": "5355756504",
+    "_id": "4c19b03fc8",
     "po_no": "SMPLF2710392",
     "po_date": null,
     "project": "UPS - Numeric",
     "part_no": "CONE003258",
-    "description": null,
+    "description": "1KV UPS - NUMERIC",
     "supplier": null,
     "supplier_email": null,
     "mpn": null,
