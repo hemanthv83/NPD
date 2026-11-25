@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-25T09:59:22",
+ "savedAt": "2026-11-25T10:00:45",
  "data": {
   "mqis": [
    [
@@ -3009,11 +3009,85 @@
     "hidden": [
      "_id"
     ]
+   },
+   "pos": {
+    "custom": {},
+    "labels": {
+     "_id": "ID",
+     "po_no": "PO Number",
+     "po_date": "PO Date",
+     "project": "Project",
+     "part_no": "Part Number",
+     "description": "Part Description",
+     "supplier": "Supplier Name",
+     "supplier_email": "Supplier Email",
+     "mpn": "MPN / Make",
+     "qty": "PO Qty",
+     "unit_price": "Unit Price",
+     "payment_terms": "Payment Terms",
+     "delivery_address": "Delivery Address",
+     "attachment": "PO Attachment",
+     "approval": "PO Approval Status",
+     "ack": "Supplier Acknowledgement",
+     "promised_date": "Promised Delivery Date",
+     "actual_date": "Actual Delivery Date",
+     "received_qty": "Received Qty",
+     "remarks": "Remarks"
+    },
+    "order": [
+     "_id",
+     "po_no",
+     "po_date",
+     "project",
+     "part_no",
+     "description",
+     "supplier",
+     "supplier_email",
+     "mpn",
+     "qty",
+     "unit_price",
+     "payment_terms",
+     "delivery_address",
+     "attachment",
+     "approval",
+     "ack",
+     "promised_date",
+     "actual_date",
+     "received_qty",
+     "remarks"
+    ],
+    "renumber": false,
+    "hidden": [
+     "_id"
+    ]
    }
   },
   "suppliers": [],
   "rfq": [],
-  "pos": [],
+  "pos": [
+   {
+    "_id": "57b1cc1e1b",
+    "po_no": "CONE003258",
+    "po_date": null,
+    "project": null,
+    "part_no": null,
+    "description": null,
+    "supplier": null,
+    "supplier_email": null,
+    "mpn": null,
+    "qty": null,
+    "unit_price": null,
+    "payment_terms": null,
+    "delivery_address": null,
+    "attachment": null,
+    "approval": null,
+    "ack": null,
+    "promised_date": null,
+    "actual_date": null,
+    "received_qty": null,
+    "remarks": null
+   }
+  ],
   "inventory": [],
   "dv": [],
   "ecn": [],
