@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-25T10:05:43",
+ "savedAt": "2026-11-25T10:07:07",
  "data": {
   "mqis": [
    [
@@ -3858,9 +3858,9 @@
     "attachments": [
      "PO_SMPLF2710392.pdf"
     ],
-    "status": "Draft",
+    "status": "Rejected",
     "created": "2026-11-25T10:02:15",
-    "updated": null,
+    "updated": "2026-11-25T10:07:07",
     "sent_at": null,
     "method": null,
     "error": null,
@@ -3935,6 +3935,18 @@
     "cc": "",
     "subject": "Purchase Order SMPLF2710392 – Acknowledgement and Delivery Confirmation",
     "detail": "for manual sending from Outlook"
+   },
+   {
+    "at": "2026-11-25T10:07:07",
+    "event": "Rejected",
+    "email_id": "3ad0a234ff",
+    "type": "PO approval",
+    "ref": "SMPLF2710392",
+    "supplier": "AVVAD TECHNOLOGIES PVT LTD",
+    "to": "",
+    "cc": "",
+    "subject": "Purchase Order SMPLF2710392 – Acknowledgement and Delivery Confirmation",
+    "detail": "wrong one"
    }
   ],
   "settings": {
