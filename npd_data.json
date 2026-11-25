@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-25T10:02:15",
+ "savedAt": "2026-11-25T10:04:08",
  "data": {
   "mqis": [
    [
@@ -3079,7 +3079,7 @@
     "unit_price": null,
     "payment_terms": null,
     "delivery_address": null,
-    "attachment": null,
+    "attachment": "PO_SMPLF2710392.pdf",
     "approval": null,
     "ack": null,
     "promised_date": null,
@@ -3854,8 +3854,10 @@
     "to": "",
     "cc": "",
     "subject": "Purchase Order SMPLF2710392 – Acknowledgement and Delivery Confirmation",
-    "body": "Dear AVVAD TECHNOLOGIES PVT LTD Team,\n\nGreetings from Sun Mobility!\n\nPurchase Order SMPLF2710392 has been released to you. The PO copy will follow separately.\n\nPO details:\n  1. CONE003258 – 1KV UPS - NUMERIC | Qty: \n\nKindly acknowledge the order and confirm the expected delivery date (ETA) at the earliest.\n\nPlease ensure the material is delivered as per the agreed specifications and commercial terms.\n\nRegards,\nNPD Team\nSun Mobility",
-    "attachments": [],
+    "body": "Dear AVVAD TECHNOLOGIES PVT LTD Team,\n\nGreetings from Sun Mobility!\n\nPlease find attached Purchase Order SMPLF2710392 for your reference.\n\nPO details:\n  1. CONE003258 – 1KV UPS - NUMERIC | Qty: \n\nKindly acknowledge the order and confirm the expected delivery date (ETA) at the earliest.\n\nPlease ensure the material is delivered as per the agreed specifications and commercial terms.\n\nRegards,\nNPD Team\nSun Mobility",
+    "attachments": [
+     "PO_SMPLF2710392.pdf"
+    ],
     "status": "Draft",
     "created": "2026-11-25T10:02:15",
     "updated": null,
@@ -3872,8 +3874,10 @@
     "to": "",
     "cc": "",
     "subject": "Purchase Order SMPLF2710392 – Acknowledgement and Delivery Confirmation",
-    "body": "Dear AVVAD TECHNOLOGIES PVT LTD Team,\n\nGreetings from Sun Mobility!\n\nPurchase Order SMPLF2710392 has been released to you. The PO copy will follow separately.\n\nPO details:\n  1. CONE003258 – 1KV UPS - NUMERIC | Qty: \n\nKindly acknowledge the order and confirm the expected delivery date (ETA) at the earliest.\n\nPlease ensure the material is delivered as per the agreed specifications and commercial terms.\n\nRegards,\nNPD Team\nSun Mobility",
-    "attachments": [],
+    "body": "Dear AVVAD TECHNOLOGIES PVT LTD Team,\n\nGreetings from Sun Mobility!\n\nPlease find attached Purchase Order SMPLF2710392 for your reference.\n\nPO details:\n  1. CONE003258 – 1KV UPS - NUMERIC | Qty: \n\nKindly acknowledge the order and confirm the expected delivery date (ETA) at the earliest.\n\nPlease ensure the material is delivered as per the agreed specifications and commercial terms.\n\nRegards,\nNPD Team\nSun Mobility",
+    "attachments": [
+     "PO_SMPLF2710392.pdf"
+    ],
     "status": "Draft",
     "created": "2026-11-25T10:02:13",
     "updated": null,
