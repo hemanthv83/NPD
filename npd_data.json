@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-25T10:01:19",
+ "savedAt": "2026-11-25T10:01:21",
  "data": {
   "mqis": [
    [
@@ -3066,11 +3066,11 @@
   "rfq": [],
   "pos": [
    {
-    "_id": "5f6c024a69",
+    "_id": "227a1476b8",
     "po_no": null,
     "po_date": null,
     "project": "UPS - Numeric",
-    "part_no": null,
+    "part_no": "CONE003258",
     "description": null,
     "supplier": null,
     "supplier_email": null,
