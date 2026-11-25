@@ -11,6 +11,7 @@ import copy
 import hashlib
 import io
 import json
+import math
 import os
 import re
 from datetime import date, datetime, timedelta
@@ -27,7 +28,7 @@ from openpyxl.worksheet.cell_range import CellRange
 # ----------------------------------------------------------------------------------------------
 # Constants
 # ----------------------------------------------------------------------------------------------
-APP_TITLE = "NPD Sourcing Tracker"
+APP_TITLE = "NPD & Sourcing Management"
 SHEETS = {
     "mqis": "MQIS AND SINGLE PHASE PART",
     "ds6": "6DS PROJECT PARTS",
@@ -175,7 +176,18 @@ def fmt_d(d) -> str:
 def empty_data() -> dict:
     return {"mqis": [MQIS_HEADERS[:], []], "ds6": [DS6_HEADERS[:], []], "projects": [], "fan": [], "teknic": [],
             "tk": {"title": "Teknic Parts (Domestic)", "parts": [], "stations": None}, "fanExtra": [],
-            "stdActs": DEFAULT_STAGE_GATE[:]}
+            "stdActs": DEFAULT_STAGE_GATE[:], "suppliers": [], "rfq": [], "pos": [], "inventory": [], "dv": [], "ecn": [], "pbom": [],
+            "emails": [], "email_log": [], "settings": dict(DEFAULT_SETTINGS)}
+
+
+DEFAULT_SETTINGS = {"company": "Sun Mobility", "team": "NPD Team", "sender_name": "", "sender_email": "", "default_cc": "",
+                    "signature": "", "ack_days": 2, "rfq_due_days": 7, "horizon_weeks": 12, "ai_model": "gpt-4o-mini"}
+COLLECTIONS = ["suppliers", "rfq", "pos", "inventory", "dv", "ecn", "pbom"]
+
+
+def new_id() -> str:
+    import uuid
+    return uuid.uuid4().hex[:10]
 
 
 def teknic_from_raw(raw) -> dict:
@@ -218,6 +230,15 @@ def norm(d: dict) -> dict:
         p.setdefault("status", "")
         p["acts"] = [_norm_row(a, 5) for a in p.get("acts", [])]
     d.setdefault("meta", {})
+    for c in COLLECTIONS + ["emails", "email_log"]:
+        if not isinstance(d.get(c), list):
+            d[c] = []
+    for c in COLLECTIONS:
+        for r in d[c]:
+            if blank(r.get("_id")):
+                r["_id"] = new_id()
+    st_ = d.get("settings") if isinstance(d.get("settings"), dict) else {}
+    d["settings"] = {**DEFAULT_SETTINGS, **st_}
     return d
 
 
@@ -1078,7 +1099,8 @@ def D() -> dict:
 
 def has_data() -> bool:
     d = D()
-    return bool(d["projects"] or d["mqis"][1] or d["ds6"][1] or d["tk"]["parts"] or d["fan"] or d["fanExtra"])
+    return bool(d["projects"] or d["mqis"][1] or d["ds6"][1] or d["tk"]["parts"] or d["fan"] or d["fanExtra"]
+                or any(d.get(c) for c in COLLECTIONS))
 
 
 # ----------------------------------------------------------------------------------------------
@@ -1142,6 +1164,9 @@ def flash():
     err = st.session_state.pop("flash_err", None)
     if err:
         st.error(err, icon="⚠️")
+    info = st.session_state.pop("flash_info", None)
+    if info:
+        st.info(info, icon="✉️")
 
 
 def plot_layout(fig, h=360):
@@ -1202,6 +1227,62 @@ TABLE_DEFS = {
                "types": {"bom": "number", "exp": "number", "qp": "number"}, "renumber": None, "label_col": "name",
                "required": [], "unique": "pn", "title": "Teknic parts"},
 }
+SUPPLIER_STATUS = ["Approved", "Under development", "On hold", "Blocked"]
+RFQ_STATUS = ["Draft", "Sent", "Quotation pending", "Clarification pending", "Quotation received", "Closed"]
+PO_APPROVAL = ["Draft", "Pending approval", "Approved", "Rejected", "Cancelled"]
+PO_ACK = ["Pending", "Acknowledged", "Not required"]
+DV_STATUS = ["Not started", "In progress", "Passed", "Failed", "On hold"]
+ECN_STATUS = ["Open", "Under review", "Approved", "Implemented", "Closed", "Rejected"]
+TABLE_DEFS.update({
+    "suppliers": {"core": ["_id", "name", "code", "category", "contact", "email", "cc", "phone", "location", "status", "rating", "remarks"],
+                  "labels": ["ID", "Supplier Name", "Vendor Code", "Category", "Contact Person", "Email", "CC Emails", "Phone",
+                             "Location", "Status", "Rating (1-5)", "Remarks"],
+                  "types": {"rating": "number"}, "renumber": None, "label_col": "name", "unique": ["name"],
+                  "title": "suppliers", "coll": "suppliers"},
+    "rfq": {"core": ["_id", "rfq_no", "rfq_date", "project", "part_no", "description", "supplier", "sent_date", "quote_due",
+                     "quote_received", "status", "remarks"],
+            "labels": ["ID", "RFQ No", "RFQ Date", "Project", "Part No", "Description", "Supplier", "Sent Date", "Quote Due",
+                       "Quote Received", "Status", "Remarks"],
+            "types": {"rfq_date": "date", "sent_date": "date", "quote_due": "date", "quote_received": "date"},
+            "renumber": None, "label_col": "rfq_no", "unique": ["rfq_no", "supplier", "part_no"], "title": "RFQs", "coll": "rfq"},
+    "pos": {"core": ["_id", "po_no", "po_date", "project", "part_no", "description", "supplier", "supplier_email", "mpn", "qty",
+                     "unit_price", "payment_terms", "delivery_address", "attachment", "approval", "ack", "promised_date",
+                     "actual_date", "received_qty", "remarks"],
+            "labels": ["ID", "PO Number", "PO Date", "Project", "Part Number", "Part Description", "Supplier Name",
+                       "Supplier Email", "MPN / Make", "PO Qty", "Unit Price", "Payment Terms", "Delivery Address",
+                       "PO Attachment", "PO Approval Status", "Supplier Acknowledgement", "Promised Delivery Date",
+                       "Actual Delivery Date", "Received Qty", "Remarks"],
+            "types": {"po_date": "date", "qty": "number", "unit_price": "number", "promised_date": "date", "actual_date": "date",
+                      "received_qty": "number"},
+            "renumber": None, "label_col": "po_no", "unique": ["po_no", "part_no"], "title": "purchase orders", "coll": "pos"},
+    "inventory": {"core": ["_id", "part_no", "part_name", "stock", "monthly", "open_po_qty", "lead_time", "confirmed_date", "safety",
+                           "project_req", "remarks"],
+                  "labels": ["ID", "Part Number", "Part Name", "Current Stock", "Monthly Consumption", "Open PO Qty (manual)",
+                             "Supplier Lead Time (days)", "Confirmed Delivery Date", "Safety Stock", "Project Requirement", "Remarks"],
+                  "types": {"stock": "number", "monthly": "number", "open_po_qty": "number", "lead_time": "number",
+                            "confirmed_date": "date", "safety": "number", "project_req": "number"},
+                  "renumber": None, "label_col": "part_name", "unique": ["part_no"], "title": "inventory", "coll": "inventory"},
+    "dv": {"core": ["_id", "project", "part_no", "supplier", "samples_handed", "dv_plan", "dv_actual", "dv_result", "dvvp_plan",
+                    "dvvp_actual", "dvvp_result", "report", "status", "remarks"],
+           "labels": ["ID", "Project", "Part No", "Supplier", "Samples Handed to Engg", "DV Plan", "DV Actual", "DV Result",
+                      "DVVP Plan", "DVVP Actual", "DVVP Result", "Report Ref", "Status", "Remarks"],
+           "types": {"samples_handed": "date", "dv_plan": "date", "dv_actual": "date", "dvvp_plan": "date", "dvvp_actual": "date"},
+           "renumber": None, "label_col": "project", "unique": ["project", "part_no", "supplier"], "title": "DV/DVVP records",
+           "coll": "dv"},
+    "ecn": {"core": ["_id", "ecn_no", "ecn_date", "type", "project", "part_no", "description", "from_make", "to_make", "reason",
+                     "approver", "status", "impl_date", "remarks"],
+            "labels": ["ID", "ECN/ECR No", "Date", "Type", "Project", "Part No", "Change Description", "From (Make/MPN)",
+                       "To (Make/MPN)", "Reason", "Approver", "Status", "Implementation Date", "Remarks"],
+            "types": {"ecn_date": "date", "impl_date": "date"}, "renumber": None, "label_col": "ecn_no", "unique": ["ecn_no"],
+            "title": "ECN/ECR records", "coll": "ecn"},
+})
+TABLE_DEFS["pbom"] = {
+    "core": ["_id", "sl", "part_no", "description", "p1r5_qty", "sp_qty", "uom", "buyer", "supplier", "project", "insp",
+             "store_stock", "wip", "remarks"],
+    "labels": ["ID", "Sl", "Part No", "Description", "P1R5 Qty", "Sing Phs Qty", "Uom", "Buyer", "Supplier", "Project", "Insp",
+               "Store Stock", "WIP", "Remarks"],
+    "types": {"sl": "number", "p1r5_qty": "number", "sp_qty": "number", "insp": "number", "store_stock": "number", "wip": "number"},
+    "renumber": None, "label_col": "part_no", "unique": ["part_no"], "title": "PBOM parts", "coll": "pbom"}
 TYPE_NAMES = {"Text": "text", "Number": "number", "Date": "date"}
 
 
@@ -1221,15 +1302,9 @@ def tmeta(d, t):
             order.append(cid)
     m["order"] = order
     m.setdefault("renumber", td["renumber"] is not None)
-    # The name column (Activity / Part Name) and the step / Sl No column must always be visible.
-    keep = {td["label_col"], td["renumber"]} - {None}
-    m["hidden"] = [c for c in m.get("hidden", []) if c in td["core"] and c not in keep]
-    if t == "acts":  # keep Step and Activity to the left of Plan Date
-        o = m["order"]
-        for cid in ("activity", "step"):
-            if cid in o and "plan" in o and o.index(cid) > o.index("plan"):
-                o.remove(cid)
-                o.insert(o.index("plan") if cid == "activity" else o.index("activity"), cid)
+    m["hidden"] = [c for c in m.get("hidden", []) if c in td["core"]]
+    if "_id" in td["core"] and "_id" not in m["hidden"]:
+        m["hidden"].append("_id")
     return m
 
 
@@ -1311,6 +1386,23 @@ def spec_teknic():
     return {"t": "teknic", "key": "teknic", "get": get, "set": put}
 
 
+def spec_coll(t, after=None):
+    coll = TABLE_DEFS[t]["coll"]
+
+    def get():
+        return [dict(r) for r in D()[coll]]
+
+    def put(recs):
+        out = []
+        for r in recs:
+            r = {k: v for k, v in r.items() if not blank(v) or k in TABLE_DEFS[t]["core"]}
+            if blank(r.get("_id")):
+                r["_id"] = new_id()
+            out.append(r)
+        D()[coll] = out
+    return {"t": t, "key": t, "get": get, "set": put, "after": after}
+
+
 def _bump(spec):
     k = f"ver_{spec['key']}"
     st.session_state[k] = st.session_state.get(k, 0) + 1
@@ -1319,6 +1411,18 @@ def _bump(spec):
 def _validate(t, recs):
     u = TABLE_DEFS[t]["unique"]
     if not u:
+        return None
+    if isinstance(u, list):
+        seen = {}
+        labels = tmeta(D(), t)["labels"]
+        for i, r in enumerate(recs):
+            key = tuple(str(r.get(f)).strip().lower() if not blank(r.get(f)) else "" for f in u)
+            if not key[0]:
+                continue
+            if key in seen:
+                what = " + ".join(f"{labels.get(f, f)} '{r.get(f)}'" for f in u if not blank(r.get(f)))
+                return f"Not saved: duplicate {TABLE_DEFS[t]['title']} — {what} is already in row {seen[key] + 1}."
+            seen[key] = i
         return None
     seen = {}
     for i, r in enumerate(recs):
@@ -1474,8 +1578,9 @@ def _grid_build(spec, computed=None, dropdowns=None):
         typ = _ctype(m, t, cid)
         lab = m["labels"][cid]
         col = {"title": lab, "name": cid, "locked": cid in td["core"],
-               "width": 70 if cid in ("slno", "step") else 300 if cid in ("activity", "remarks") else
-               220 if cid in ("partname", "name", "supplier", "vendor", "mpn1", "mpn", "exs", "alts") else
+               "width": 70 if cid in ("slno", "step") else 300 if cid in ("activity", "remarks", "description") else
+               220 if cid in ("partname", "name", "supplier", "vendor", "mpn1", "mpn", "exs", "alts", "part_name",
+                              "delivery_address", "supplier_email", "email", "cc") else
                110 if typ in ("number", "date") else 150}
         if cid in m["hidden"]:
             col["type"] = "hidden"
@@ -1548,8 +1653,12 @@ def _grid_apply(spec, val):
     err = _validate(t, recs)
     if err:
         return False, err
+    old = spec["get"]()
     spec["set"](recs)
-    commit(f"{td['title'].capitalize()} saved")
+    note = ""
+    if spec.get("after"):
+        note = spec["after"](old, spec["get"]()) or ""
+    commit(f"{td['title'].capitalize()} saved" + (f" · {note}" if note else ""))
     return True, None
 
 
@@ -1567,16 +1676,6 @@ def excel_grid(spec, computed=None, dropdowns=None, height=460, help_text=None):
     td = TABLE_DEFS[spec["t"]]
     val = _grid_component()(rev=ss[f"grev_{k}"], columns=columns, data=data, computed=comp_rows, height=height,
                             renumber=td["renumber"], status=err or "", status_err=bool(err), key=f"grid_{k}", default=None)
-    hid = tmeta(D(), spec["t"])["hidden"]
-    if hid:
-        mh = tmeta(D(), spec["t"])
-        c1, c2 = st.columns([4, 1])
-        c1.caption("Hidden columns: " + ", ".join(mh["labels"].get(c, c) for c in hid))
-        if c2.button("Show hidden columns", key=f"unhide_{k}"):
-            mh["hidden"] = []
-            commit(f"{td['title'].capitalize()}: hidden columns restored")
-            _bump(spec)
-            st.rerun()
     with st.expander("Grid not showing? View the data as a plain table"):
         plain = pd.DataFrame([row[:len(columns)] for row in data], columns=[c["title"] for c in columns]) if data else pd.DataFrame(
             columns=[c["title"] for c in columns])
@@ -1635,6 +1734,8 @@ def page_dashboard():
     if not has_data():
         no_data_notice()
         return
+    procurement_overview()
+    st.markdown('<div class="section">NPD alternate development</div>', unsafe_allow_html=True)
     stats = [(p, proj_stats(p)) for p in d["projects"]]
     comp = sum(1 for p, _ in stats if p["status"] == "Completed")
     ong = sum(1 for p, _ in stats if p["status"] == "Ongoing")
@@ -2277,19 +2378,1527 @@ def page_data():
             st.rerun()
 
 
+# ==============================================================================================
+# PROCUREMENT MODULES: suppliers, RFQ, PO, email approval, follow-ups, inventory, DV/DVVP, ECN, AI, reports
+# ==============================================================================================
+EMAIL_RE = re.compile(r"^[^@\s,;<>]+@[^@\s,;<>]+\.[^@\s,;<>]+$")
+
+
+def S_() -> dict:
+    return D()["settings"]
+
+
+def split_emails(txt) -> list:
+    return [e.strip() for e in re.split(r"[,;\s]+", str(txt or "")) if e.strip()]
+
+
+def bad_emails(txt) -> list:
+    return [e for e in split_emails(txt) if not EMAIL_RE.match(e)]
+
+
+def supplier_rec(name):
+    k = _nk(name)
+    return next((s for s in D()["suppliers"] if _nk(s.get("name")) == k and k), None)
+
+
+def supplier_options():
+    return sorted({s["name"] for s in D()["suppliers"] if not blank(s.get("name"))})
+
+
+def project_options():
+    return sorted({p["name"] for p in D()["projects"]})
+
+
+# ---------------------------------------------------------------------------------------------- PO calculations
+def po_calc(r: dict) -> dict:
+    qty = num(r.get("qty")) or 0
+    price = num(r.get("unit_price")) or 0
+    rec = num(r.get("received_qty")) or 0
+    bal = max(qty - rec, 0)
+    prom, act = to_date(r.get("promised_date")), to_date(r.get("actual_date"))
+    appr = (r.get("approval") or "Draft").strip()
+    ack = (r.get("ack") or "Pending").strip()
+    delay = None
+    if prom and act:
+        delay = (act - prom).days
+    elif prom and bal > 0 and today() > prom:
+        delay = (today() - prom).days
+    if appr in ("Rejected", "Cancelled"):
+        status = appr
+    elif appr != "Approved":
+        status = "Awaiting approval"
+    elif qty and rec >= qty:
+        status = "Closed – received"
+    elif rec > 0:
+        status = "Partial – overdue" if prom and today() > prom else "Partially received"
+    elif ack not in ("Acknowledged", "Not required"):
+        status = "Ack pending"
+    elif not prom:
+        status = "ETA pending"
+    elif today() > prom:
+        status = "Overdue"
+    else:
+        status = "Open – on schedule"
+    return {"Total Value": round(qty * price, 2) if qty and price else None, "Balance Qty": bal if qty else None,
+            "Delay (days)": delay, "PO Status": status}
+
+
+def po_lines():
+    return [{**r, **po_calc(r)} for r in D()["pos"]]
+
+
+def po_groups():
+    """PO number -> list of lines."""
+    g = {}
+    for r in D()["pos"]:
+        if not blank(r.get("po_no")):
+            g.setdefault(str(r["po_no"]).strip(), []).append(r)
+    return g
+
+
+# ---------------------------------------------------------------------------------------------- attachments
+def att_save(name: str, data: bytes) -> str:
+    """Store a file permanently (GitHub data branch) or for this session only. Returns where it was stored."""
+    import base64
+    cfg = gh_cfg()
+    if cfg:
+        path = f"attachments/{name}"
+        g = _gh("GET", f"/contents/{path}", cfg, params={"ref": cfg["branch"]})
+        body = {"message": f"NPD tracker: attachment {name}", "branch": cfg["branch"],
+                "content": base64.b64encode(data).decode()}
+        if g.status_code == 200:
+            body["sha"] = g.json()["sha"]
+        r = _gh("PUT", f"/contents/{path}", cfg, json=body)
+        if r.status_code not in (200, 201):
+            raise RuntimeError(f"GitHub {r.status_code}: {r.json().get('message', '')[:150]}")
+        return "github"
+    st.session_state.setdefault("att_mem", {})[name] = data
+    return "session"
+
+
+def att_load(name: str):
+    import base64
+    mem = st.session_state.get("att_mem", {})
+    if name in mem:
+        return mem[name]
+    cfg = gh_cfg()
+    if cfg and name:
+        r = _gh("GET", f"/contents/attachments/{name}", cfg, params={"ref": cfg["branch"]})
+        if r.status_code == 200:
+            j = r.json()
+            if j.get("content"):
+                return base64.b64decode(j["content"])
+            b = _gh("GET", f"/git/blobs/{j['sha']}", cfg)
+            if b.status_code == 200:
+                return base64.b64decode(b.json()["content"])
+    return None
+
+
+# ---------------------------------------------------------------------------------------------- email drafts
+def _log_email(e, event, detail=""):
+    D()["email_log"].append({"at": datetime.now().isoformat(timespec="seconds"), "event": event, "email_id": e["id"],
+                             "type": e.get("type"), "ref": e.get("ref"), "supplier": e.get("supplier"), "to": e.get("to"),
+                             "cc": e.get("cc"), "subject": e.get("subject"), "detail": detail})
+
+
+def make_draft(kind, ref, supplier, to, cc, subject, body, attachments=None, source="system"):
+    e = {"id": new_id(), "type": kind, "ref": ref, "supplier": supplier, "to": to or "", "cc": cc or "", "subject": subject,
+         "body": body, "attachments": attachments or [], "status": "Draft", "created": datetime.now().isoformat(timespec="seconds"),
+         "updated": None, "sent_at": None, "method": None, "error": None, "source": source}
+    D()["emails"].insert(0, e)
+    _log_email(e, "Draft created", source)
+    return e
+
+
+def _sig_block():
+    s = S_()
+    lines = ["Regards,", s.get("sender_name") or s.get("team") or "NPD Team"]
+    if s.get("sender_name") and s.get("team"):
+        lines.append(s["team"])
+    lines.append(s.get("company") or "Sun Mobility")
+    if s.get("signature"):
+        lines.append(s["signature"])
+    return "\n".join(lines)
+
+
+def po_email(po_no, lines):
+    first = lines[0]
+    sup = first.get("supplier") or "Supplier"
+    srec = supplier_rec(sup) or {}
+    to = first.get("supplier_email") or srec.get("email") or ""
+    cc = ", ".join(x for x in [srec.get("cc"), S_().get("default_cc")] if not blank(x))
+    att = sorted({str(r["attachment"]).strip() for r in lines if not blank(r.get("attachment"))})
+    greet = f"Dear {srec.get('contact')}," if srec.get("contact") else f"Dear {sup} Team,"
+    po_date = fmt_d(first.get("po_date"))
+    rows = "\n".join(f"  {i + 1}. {r.get('part_no') or ''} – {r.get('description') or ''} | Qty: {r.get('qty') or ''}"
+                     + (f" | Unit price: {inr(num(r.get('unit_price')))}" if num(r.get('unit_price')) else "")
+                     for i, r in enumerate(lines))
+    intro = (f"Please find attached Purchase Order {po_no}" + (f" dated {po_date}" if po_date else "") + " for your reference."
+             if att else f"Purchase Order {po_no}" + (f" dated {po_date}" if po_date else "") +
+             " has been released to you. The PO copy will follow separately.")
+    extra = []
+    if not blank(first.get("payment_terms")):
+        extra.append(f"Payment terms: {first['payment_terms']}")
+    if not blank(first.get("delivery_address")):
+        extra.append(f"Delivery address: {first['delivery_address']}")
+    body = (f"{greet}\n\nGreetings from {S_().get('company') or 'Sun Mobility'}!\n\n{intro}\n\nPO details:\n{rows}\n"
+            + ("\n" + "\n".join(extra) + "\n" if extra else "") +
+            "\nKindly acknowledge the order and confirm the expected delivery date (ETA) at the earliest.\n\n"
+            "Please ensure the material is delivered as per the agreed specifications and commercial terms.\n\n" + _sig_block())
+    subject = f"Purchase Order {po_no} – Acknowledgement and Delivery Confirmation"
+    return to, cc, subject, body, att
+
+
+def po_after_save(old, new):
+    """When a PO line turns APPROVED: create ONE email draft per PO number. Never sends."""
+    was = {(str(r.get("po_no")).strip(), str(r.get("part_no")).strip()): (r.get("approval") or "") for r in old}
+    newly = sorted({str(r.get("po_no")).strip() for r in new
+                    if (r.get("approval") or "") == "Approved" and not blank(r.get("po_no"))
+                    and was.get((str(r.get("po_no")).strip(), str(r.get("part_no")).strip())) != "Approved"})
+    made = []
+    groups = po_groups()
+    for po in newly:
+        if any(e["type"] == "PO approval" and e["ref"] == po and e["status"] in ("Draft", "Approved – send from Outlook", "Sent")
+               for e in D()["emails"]):
+            continue
+        to, cc, subject, body, att = po_email(po, groups.get(po, []))
+        make_draft("PO approval", po, groups[po][0].get("supplier"), to, cc, subject, body, att, source="PO approved")
+        made.append(po)
+    if made:
+        st.session_state.flash_info = (f"Email draft created for PO {', '.join(made)} in the Email Approval Centre. "
+                                       "Nothing has been sent.")
+        return f"email draft created for {', '.join(made)}"
+    return ""
+
+
+def build_eml(e) -> bytes:
+    from email.message import EmailMessage
+    from email.utils import make_msgid, formataddr
+    msg = EmailMessage()
+    s = S_()
+    if s.get("sender_email"):
+        msg["From"] = formataddr((s.get("sender_name") or "", s["sender_email"]))
+    msg["To"] = ", ".join(split_emails(e["to"]))
+    if split_emails(e["cc"]):
+        msg["Cc"] = ", ".join(split_emails(e["cc"]))
+    msg["Subject"] = e["subject"]
+    msg["Message-ID"] = make_msgid(domain="npd-tracker")
+    msg["X-Unsent"] = "1"  # Outlook opens it as a draft ready to send
+    msg.set_content(e["body"])
+    for name in e.get("attachments") or []:
+        data = att_load(name)
+        if data:
+            sub = "pdf" if name.lower().endswith(".pdf") else "octet-stream"
+            msg.add_attachment(data, maintype="application", subtype=sub, filename=name)
+    return bytes(msg)
+
+
+def smtp_cfg():
+    try:
+        c = st.secrets.get("smtp", None)
+    except Exception:  # noqa: BLE001
+        return None
+    if not c or not c.get("host") or not c.get("username") or not c.get("password"):
+        return None
+    return {"host": c["host"], "port": int(c.get("port", 587)), "username": c["username"], "password": c["password"],
+            "from_addr": c.get("from_addr", c["username"]), "ssl": bool(c.get("ssl", False))}
+
+
+def smtp_send(e):
+    import smtplib
+    from email import message_from_bytes
+    cfg = smtp_cfg()
+    raw = build_eml(e)
+    msg = message_from_bytes(raw)
+    del msg["X-Unsent"]
+    del msg["From"]
+    msg["From"] = cfg["from_addr"]
+    rcpt = split_emails(e["to"]) + split_emails(e["cc"])
+    if cfg["ssl"]:
+        srv = smtplib.SMTP_SSL(cfg["host"], cfg["port"], timeout=30)
+    else:
+        srv = smtplib.SMTP(cfg["host"], cfg["port"], timeout=30)
+        srv.starttls()
+    try:
+        srv.login(cfg["username"], cfg["password"])
+        srv.sendmail(cfg["from_addr"], rcpt, msg.as_bytes())
+    finally:
+        try:
+            srv.quit()
+        except Exception:  # noqa: BLE001
+            pass
+
+
+# ---------------------------------------------------------------------------------------------- follow-ups
+FOLLOW_TYPES = ["RFQ pending", "Quotation pending", "Technical clarification pending", "Sample ETA pending",
+                "PO acknowledgement pending", "Supplier ETA pending", "Delivery confirmation pending", "Overdue material"]
+
+
+def followup_items():
+    d = D()
+    out = []
+    s = S_()
+    ack_days = int(num(s.get("ack_days")) or 2)
+    for r in d["rfq"]:
+        stt = (r.get("status") or "").strip()
+        sup = r.get("supplier")
+        ref = r.get("rfq_no") or ""
+        due = to_date(r.get("quote_due"))
+        base = {"supplier": sup, "ref": f"RFQ {ref}", "part": r.get("part_no"), "project": r.get("project"),
+                "desc": r.get("description")}
+        if stt == "Draft":
+            created = to_date(r.get("rfq_date"))
+            out.append({**base, "type": "RFQ pending", "detail": "RFQ prepared but not sent", "days": (today() - created).days
+                        if created else None, "internal": True})
+        elif stt in ("Sent", "Quotation pending") and not to_date(r.get("quote_received")):
+            late = (today() - due).days if due else None
+            out.append({**base, "type": "Quotation pending", "detail": f"Quote due {fmt_d(due)}" if due else "No due date",
+                        "days": late if late and late > 0 else 0})
+        elif stt == "Clarification pending":
+            out.append({**base, "type": "Technical clarification pending", "detail": r.get("remarks") or "Clarification awaited",
+                        "days": None})
+    for r in po_lines():
+        if (r.get("approval") or "") != "Approved" or r["PO Status"].startswith("Closed"):
+            continue
+        base = {"supplier": r.get("supplier"), "ref": f"PO {r.get('po_no')}", "part": r.get("part_no"),
+                "project": r.get("project"), "desc": r.get("description")}
+        pod = to_date(r.get("po_date"))
+        age = (today() - pod).days if pod else None
+        if r["PO Status"] == "Ack pending" and (age is None or age >= ack_days):
+            out.append({**base, "type": "PO acknowledgement pending", "detail": f"PO dated {fmt_d(pod)}" if pod else "",
+                        "days": age})
+        elif r["PO Status"] == "ETA pending":
+            out.append({**base, "type": "Supplier ETA pending", "detail": "Acknowledged, no delivery date", "days": age})
+        elif r["PO Status"] in ("Overdue", "Partial – overdue"):
+            out.append({**base, "type": "Overdue material",
+                        "detail": f"Promised {fmt_d(r.get('promised_date'))}, balance {r['Balance Qty']}",
+                        "days": r["Delay (days)"]})
+        else:
+            prom = to_date(r.get("promised_date"))
+            if prom and 0 <= (prom - today()).days <= 3:
+                out.append({**base, "type": "Delivery confirmation pending", "detail": f"Due {fmt_d(prom)}", "days": 0})
+    for p in d["projects"]:
+        if p.get("status") != "Ongoing":
+            continue
+        for a in p["acts"]:
+            if re.search(r"sample", str(a[1] or ""), re.I) and activity_status(a) == "Delayed":
+                out.append({"supplier": None, "ref": f"NPD {p['name']}", "part": None, "project": p["name"],
+                            "desc": a[1], "type": "Sample ETA pending", "detail": f"Plan {fmt_d(a[2])}",
+                            "days": (today() - to_date(a[2])).days})
+    for it in out:
+        srec = supplier_rec(it.get("supplier")) if it.get("supplier") else None
+        it["email"] = (srec or {}).get("email") or next((x.get("supplier_email") for x in d["pos"]
+                                                         if _nk(x.get("supplier")) == _nk(it.get("supplier"))
+                                                         and not blank(x.get("supplier_email"))), "") if it.get("supplier") else ""
+    return out
+
+
+FOLLOW_TEXT = {
+    "RFQ pending": "our RFQ is ready to be shared with you",
+    "Quotation pending": "we are yet to receive your quotation for the RFQ below",
+    "Technical clarification pending": "the technical clarifications below are still open from your side",
+    "Sample ETA pending": "we are awaiting confirmation of the sample dispatch / ETA",
+    "PO acknowledgement pending": "we have not yet received your acknowledgement of the Purchase Order below",
+    "Supplier ETA pending": "please confirm the delivery date (ETA) for the Purchase Order below",
+    "Delivery confirmation pending": "please confirm that the material below will be delivered as scheduled",
+    "Overdue material": "the material below is overdue against the committed delivery date",
+}
+
+
+def followup_email(supplier, items, escalate=False):
+    srec = supplier_rec(supplier) or {}
+    to = srec.get("email") or next((i["email"] for i in items if i.get("email")), "")
+    cc = ", ".join(x for x in [srec.get("cc"), S_().get("default_cc")] if not blank(x))
+    greet = f"Dear {srec.get('contact')}," if srec.get("contact") else f"Dear {supplier or 'Supplier'} Team,"
+    kinds = sorted({i["type"] for i in items})
+    lines = []
+    for i, it in enumerate(items, 1):
+        bits = [it["ref"], it.get("part") or "", it.get("desc") or "", it.get("detail") or ""]
+        if it.get("days"):
+            bits.append(f"{it['days']} day(s) pending")
+        lines.append(f"  {i}. " + " | ".join(b for b in bits if b))
+    reason = FOLLOW_TEXT.get(kinds[0], "the points below are pending") if len(kinds) == 1 else "the points below are pending from your side"
+    if escalate:
+        subject = f"ESCALATION – Pending actions from {supplier} ({len(items)} item(s))"
+        body = (f"{greet}\n\nDespite earlier reminders, {reason}. This is now affecting our development and production plan.\n\n"
+                + "\n".join(lines) +
+                "\n\nPlease treat this as top priority and share a written closure plan with committed dates within 24 hours.\n\n"
+                + _sig_block())
+    else:
+        subject = f"Follow-up: {', '.join(kinds)} – {supplier}"
+        body = (f"{greet}\n\nGreetings from {S_().get('company') or 'Sun Mobility'}!\n\nThis is a follow-up as {reason}:\n\n"
+                + "\n".join(lines) + "\n\nKindly respond with the required confirmation / documents at the earliest.\n\n"
+                + _sig_block())
+    return to, cc, subject, body
+
+
+# ---------------------------------------------------------------------------------------------- inventory projection
+def inventory_projection():
+    d = D()
+    weeks = int(num(S_().get("horizon_weeks")) or 12)
+    lines_by_part = {}
+    for r in po_lines():
+        if not blank(r.get("part_no")) and (r.get("approval") or "") == "Approved" and (r.get("Balance Qty") or 0) > 0:
+            lines_by_part.setdefault(_nk(r["part_no"]), []).append(r)
+    out = []
+    for inv in d["inventory"]:
+        stock = num(inv.get("stock")) or 0
+        monthly = num(inv.get("monthly")) or 0
+        daily = monthly / 30 if monthly else 0
+        safety = num(inv.get("safety")) or 0
+        lt = int(num(inv.get("lead_time")) or 0)
+        confirmed, unconfirmed = [], 0
+        pols = lines_by_part.get(_nk(inv.get("part_no")), [])
+        if pols:
+            for r in pols:
+                prom = to_date(r.get("promised_date"))
+                if prom and prom >= today() and (r.get("ack") or "") in ("Acknowledged", "Not required"):
+                    confirmed.append((prom, r["Balance Qty"], f"PO {r.get('po_no')}"))
+                else:  # no acknowledgement, no date, or the promised date has already been missed
+                    unconfirmed += r["Balance Qty"] or 0
+        else:
+            q, cd = num(inv.get("open_po_qty")) or 0, to_date(inv.get("confirmed_date"))
+            if q and cd and cd >= today():
+                confirmed.append((cd, q, "Open PO (manual)"))
+            elif q:
+                unconfirmed += q
+        # daily simulation (shortages between weekly points are not missed); weekly view = end-of-week level
+        days = 7 * weeks
+        level, lv = stock, [stock]
+        inc_by_day = {}
+        for dt, q, _ in confirmed:
+            inc_by_day[(dt - today()).days] = inc_by_day.get((dt - today()).days, 0) + q
+        for dd in range(1, days + 1):
+            level = level + inc_by_day.get(dd, 0) - daily
+            lv.append(level)
+        lv[0] = stock + inc_by_day.get(0, 0)
+        proj = [round(lv[7 * w], 1) for w in range(weeks + 1)]
+        projmin = [round(min(lv[max(0, 7 * w - 6):7 * w + 1]), 1) for w in range(weeks + 1)]
+        cov = stock / daily if daily else None
+        short_d = next((i for i, v in enumerate(lv) if v < 0), None)
+        below_d = next((i for i, v in enumerate(lv) if v < safety), None)
+        short_w = None if short_d is None else short_d // 7
+        # reorder qty: what a new order (arriving after the lead time) must add so that projected stock
+        # stays at or above safety stock for the 30 days after it arrives
+        win = lv[min(lt, len(lv) - 1): lt + 31]
+        reorder = max(math.ceil(safety - min(win)), 0) if daily and win else 0
+        expedite = below_d is not None and below_d < lt  # a new order cannot arrive in time
+        overdue = any(r["PO Status"] in ("Overdue", "Partial – overdue") for r in pols)
+        sup_risk = overdue or unconfirmed > 0
+        req = num(inv.get("project_req")) or 0
+        prod_risk = bool(req) and req > stock + sum(q for _, q, _ in confirmed)
+        if short_d is not None and (short_d <= max(lt, 7) or stock <= 0):
+            risk = "RED"  # stock-out before a new order could arrive
+        elif short_d is not None or below_d is not None or prod_risk:
+            risk = "YELLOW"
+        else:
+            risk = "GREEN"
+        flags = []
+        if stock <= safety and daily:
+            flags.append("Critical stock")
+        if short_w is not None:
+            flags.append(f"Stock-out in {short_d} day(s)" if short_d else "Out of stock")
+        if reorder:
+            flags.append(f"Reorder {reorder}")
+        if expedite:
+            flags.append("Expedite open POs / spot buy (gap before lead time)")
+        if sup_risk:
+            flags.append("Supplier delivery risk")
+        if prod_risk:
+            flags.append("Production shortage risk")
+        out.append({"inv": inv, "daily": round(daily, 2), "coverage": round(cov, 1) if cov is not None else None,
+                    "proj": proj, "projmin": projmin, "safety": safety, "risk": risk, "flags": flags, "reorder": reorder,
+                    "confirmed": confirmed, "unconfirmed": unconfirmed, "short_w": short_w})
+    return out
+
+
+def inv_calc(rec):
+    monthly = num(rec.get("monthly")) or 0
+    daily = monthly / 30 if monthly else 0
+    stock = num(rec.get("stock")) or 0
+    return {"Daily Consumption": round(daily, 2) if daily else None,
+            "Stock Coverage (days)": round(stock / daily, 1) if daily else None}
+
+
+# ---------------------------------------------------------------------------------------------- KPIs used by dashboard + AI
+def proc_kpis():
+    d = D()
+    lines = po_lines()
+    pos = po_groups()
+    act = activities_df(d)
+    pend_samples = set()
+    pend_dv = set()
+    if not act.empty:
+        for _, r in act.iterrows():
+            if r["Status"] in ("Delayed", "Due in 7 days", "Open") and re.search("sample", str(r["Activity"]), re.I):
+                pend_samples.add(r["Project"])
+            if r["Status"] in ("Delayed", "Due in 7 days", "Open") and re.search(r"\bDV", str(r["Activity"])):
+                pend_dv.add(r["Project"])
+    for r in d["dv"]:
+        if (r.get("status") or "") not in ("Passed", "Failed"):
+            pend_dv.add(r.get("project") or r.get("part_no"))
+    return {
+        "projects": len(d["projects"]),
+        "active_parts": sum(1 for p in d["projects"] if p.get("status") == "Ongoing"),
+        "pos": len(pos),
+        "pending_approval": len({str(r["po_no"]).strip() for r in lines if r.get("approval") in ("Draft", "Pending approval", None, "")
+                                 and not blank(r.get("po_no"))}),
+        "ack_pending": len({str(r["po_no"]) for r in lines if r["PO Status"] == "Ack pending"}),
+        "eta_pending": len({str(r["po_no"]) for r in lines if r["PO Status"] == "ETA pending"}),
+        "overdue": sum(1 for r in lines if r["PO Status"] in ("Overdue", "Partial – overdue")),
+        "samples": len(pend_samples),
+        "dv": len({x for x in pend_dv if x}),
+        "ecn": sum(1 for r in d["ecn"] if (r.get("status") or "Open") not in ("Implemented", "Closed", "Rejected")),
+        "drafts": sum(1 for e in d["emails"] if e["status"] in ("Draft", "Approved – send from Outlook")),
+    }
+
+
+def procurement_overview():
+    k = proc_kpis()
+    st.markdown('<div class="section">Procurement & development control</div>', unsafe_allow_html=True)
+    rows = [[("NPD projects", k["projects"], "in tracker", None), ("Active development parts", k["active_parts"], "ongoing projects", None),
+             ("Purchase orders", k["pos"], "PO numbers", None), ("Pending PO approvals", k["pending_approval"], "draft / pending", COLORS["warn"]),
+             ("PO ack pending", k["ack_pending"], "approved, not acknowledged", COLORS["warn"])],
+            [("Supplier ETA pending", k["eta_pending"], "no delivery date", COLORS["warn"]),
+             ("Overdue deliveries", k["overdue"], "PO lines past promised date", COLORS["bad"]),
+             ("Pending samples", k["samples"], "projects with open sample steps", None),
+             ("Pending DV/DVVP", k["dv"], "projects / parts", None), ("Open ECN/ECR", k["ecn"], "not implemented / closed", None)]]
+    for row in rows:
+        cols = st.columns(5)
+        for c, (lab, v, sub, col) in zip(cols, row):
+            with c:
+                kpi(lab, v, sub, value_color=col if v else None)
+    if k["drafts"]:
+        st.info(f"✉️ {k['drafts']} email draft(s) waiting for your approval in the Email Approval Centre. Nothing is sent "
+                "without your click.")
+    lines = po_lines()
+    fu = followup_items()
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown('<div class="section">Supplier-wise pending activities</div>', unsafe_allow_html=True)
+        if fu:
+            df = pd.DataFrame([{"Supplier": i.get("supplier") or i.get("project") or "-", "Type": i["type"]} for i in fu])
+            g = df.groupby(["Supplier", "Type"]).size().reset_index(name="Items")
+            fig = px.bar(g, x="Items", y="Supplier", color="Type", orientation="h")
+            fig.update_yaxes(autorange="reversed", title=None)
+            st.plotly_chart(plot_layout(fig, 30 * g["Supplier"].nunique() + 160), width="stretch")
+        else:
+            st.caption("No pending supplier actions (add RFQs and POs to track them).")
+    with c2:
+        st.markdown('<div class="section">PO delivery status</div>', unsafe_allow_html=True)
+        if lines:
+            g = pd.DataFrame(lines)["PO Status"].value_counts().reset_index()
+            g.columns = ["Status", "Lines"]
+            cmap = {"Overdue": COLORS["bad"], "Partial – overdue": COLORS["bad"], "Ack pending": COLORS["warn"],
+                    "ETA pending": COLORS["warn"], "Awaiting approval": COLORS["idle"], "Open – on schedule": COLORS["navy"],
+                    "Partially received": COLORS["P1R5"], "Closed – received": COLORS["ok"], "Rejected": "#999",
+                    "Cancelled": "#bbb"}
+            fig = px.pie(g, names="Status", values="Lines", hole=0.55, color="Status", color_discrete_map=cmap)
+            st.plotly_chart(plot_layout(fig, 320), width="stretch")
+        else:
+            st.caption("No purchase orders yet.")
+    c3, c4 = st.columns(2)
+    with c3:
+        st.markdown('<div class="section">Monthly procurement value (approved POs)</div>', unsafe_allow_html=True)
+        vals = [(to_date(r.get("po_date")), r["Total Value"]) for r in lines
+                if r.get("approval") == "Approved" and to_date(r.get("po_date")) and r["Total Value"]]
+        if vals:
+            df = pd.DataFrame(vals, columns=["date", "value"])
+            df["Month"] = pd.to_datetime(df["date"]).dt.to_period("M").dt.to_timestamp()
+            g = df.groupby("Month")["value"].sum().reset_index()
+            fig = px.bar(g, x="Month", y="value", labels={"value": "₹"}, color_discrete_sequence=[COLORS["navy"]])
+            fig.update_xaxes(dtick="M1", tickformat="%b %y")
+            st.plotly_chart(plot_layout(fig, 300), width="stretch")
+        else:
+            st.caption("Needs approved POs with PO date, qty and unit price.")
+    with c4:
+        st.markdown('<div class="section">Delayed material analysis</div>', unsafe_allow_html=True)
+        late = [r for r in lines if r["PO Status"] in ("Overdue", "Partial – overdue")]
+        if late:
+            df = pd.DataFrame([{"Item": f"{r.get('part_no')} · {r.get('supplier')}", "Days late": r["Delay (days)"],
+                                "PO": r.get("po_no")} for r in late]).sort_values("Days late", ascending=False).head(15)
+            fig = px.bar(df, x="Days late", y="Item", orientation="h", hover_data=["PO"], color_discrete_sequence=[COLORS["bad"]])
+            fig.update_yaxes(autorange="reversed", title=None)
+            st.plotly_chart(plot_layout(fig, 30 * len(df) + 140), width="stretch")
+        else:
+            st.caption("No overdue PO lines.")
+
+
+# ---------------------------------------------------------------------------------------------- pages
+def page_suppliers_master():
+    header("Supplier Management", "Supplier master used for PO and follow-up emails. Edit like Excel; it saves automatically.")
+    view = st.radio("View", ["Supplier list", "Supplier-wise parts analysis"], horizontal=True, label_visibility="collapsed",
+                    key="sup_view")
+    if view == "Supplier list":
+        excel_grid(spec_coll("suppliers"), dropdowns={"status": SUPPLIER_STATUS}, height=420,
+                   help_text="Email / CC Emails are used in PO and follow-up drafts. Separate several addresses with a comma.")
+        bad = [(s.get("name"), x) for s in D()["suppliers"] for x in bad_emails(s.get("email")) + bad_emails(s.get("cc"))]
+        if bad:
+            st.warning("Invalid email address(es): " + "; ".join(f"{n}: {x}" for n, x in bad))
+    else:
+        page_suppliers()
+
+
+def page_rfq():
+    header("RFQ Management", "Track RFQs, quotations and clarifications per supplier. Pending items feed Supplier Follow-ups.")
+    sups, projs = supplier_options(), project_options()
+    excel_grid(spec_coll("rfq"), dropdowns={k: v for k, v in {"status": RFQ_STATUS, "supplier": sups, "project": projs}.items() if v},
+               height=440)
+
+
+def page_po():
+    header("Purchase Order Management",
+           "One row per PO line. Total value, balance, delay and status calculate automatically. Setting a PO to "
+           "Approved creates an email draft for your review. It is never sent automatically.")
+    d = D()
+    lines = po_lines()
+    if lines:
+        k = proc_kpis()
+        c = st.columns(5)
+        for col, (lab, v, colr) in zip(c, [("PO numbers", k["pos"], None), ("Pending approval", k["pending_approval"], COLORS["warn"]),
+                                            ("Ack pending", k["ack_pending"], COLORS["warn"]), ("ETA pending", k["eta_pending"], COLORS["warn"]),
+                                            ("Overdue lines", k["overdue"], COLORS["bad"])]):
+            with col:
+                kpi(lab, v, "", value_color=colr if v else None)
+        tot = sum(r["Total Value"] or 0 for r in lines if r.get("approval") == "Approved")
+        st.caption(f"Approved PO value: **{inr(tot)}**")
+    excel_grid(spec_coll("pos", after=po_after_save), computed=po_calc,
+               dropdowns={k: v for k, v in {"approval": PO_APPROVAL, "ack": PO_ACK, "supplier": supplier_options(),
+                                             "project": project_options()}.items() if v}, height=480,
+               help_text="Supplier Email: leave blank to use the email from Supplier Management. Total Value, Balance Qty, "
+                         "Delay (days) and PO Status are calculated.")
+    groups = po_groups()
+    with st.expander("📎 Attach PO PDF"):
+        if not groups:
+            st.caption("Add a PO first.")
+        else:
+            po = st.selectbox("PO number", sorted(groups), key="att_po")
+            f = st.file_uploader("PO document (PDF, max 10 MB)", type=["pdf"], key="att_file")
+            if f is not None and st.button("Upload and link to this PO", type="primary"):
+                if f.size > 10 * 1024 * 1024:
+                    st.error("File is larger than 10 MB.")
+                else:
+                    name = re.sub(r"[^A-Za-z0-9._-]+", "_", f"PO_{po}.pdf")
+                    try:
+                        where = att_save(name, f.getvalue())
+                        for r in d["pos"]:
+                            if str(r.get("po_no")).strip() == po:
+                                r["attachment"] = name
+                        for e in d["emails"]:
+                            if e["ref"] == po and e["type"] == "PO approval" and e["status"] == "Draft":
+                                if e.get("updated") is None:  # untouched draft: rebuild text with the attachment
+                                    _, _, _, body, att = po_email(po, groups[po])
+                                    e.update(body=body, attachments=att)
+                                elif name not in e["attachments"]:
+                                    e["attachments"].append(name)
+                        commit(f"PO {po}: attachment {name} uploaded")
+                        if where == "session":
+                            st.warning("Stored for this session only (GitHub saving is off). Re-upload after a restart.")
+                        st.rerun()
+                    except Exception as ex:  # noqa: BLE001
+                        st.error(f"Upload failed: {ex}")
+    with st.expander("✉️ Create the PO email draft again for a PO"):
+        if groups:
+            po2 = st.selectbox("PO number ", sorted(groups), key="redraft_po")
+            if st.button("Create draft"):
+                to, cc, subject, body, att = po_email(po2, groups[po2])
+                make_draft("PO approval", po2, groups[po2][0].get("supplier"), to, cc, subject, body, att, source="manual")
+                commit(f"Email draft created for PO {po2}")
+                st.rerun()
+
+
+EMAIL_STATES = ["Draft", "Approved – send from Outlook", "Sent", "Rejected", "Failed"]
+
+
+def _email_set(e, **kw):
+    e.update(kw)
+    e["updated"] = datetime.now().isoformat(timespec="seconds")
+
+
+def page_email_centre():
+    d = D()
+    header("Email Approval Centre", "Every supplier email waits here. Nothing is sent until you review it and click Approve.")
+    smtp = smtp_cfg()
+    st.caption(("🟢 Direct sending is configured (SMTP). Approve & Send sends the email." if smtp else
+                "⚪ Direct sending is not configured. Approve creates an Outlook-ready .eml file, which opens as a draft "
+                "in Outlook for you to send. Then click Mark as sent.") )
+    tab = st.radio("Show", ["Pending", "Sent", "Rejected / failed", "Email history"], horizontal=True, key="em_tab",
+                   label_visibility="collapsed")
+    if tab == "Email history":
+        log = d["email_log"]
+        if not log:
+            st.caption("No email activity yet.")
+        else:
+            st.dataframe(pd.DataFrame(log[::-1])[["at", "event", "type", "ref", "supplier", "to", "cc", "subject", "detail"]],
+                         hide_index=True, width="stretch", height=480)
+        return
+    want = {"Pending": ("Draft", "Approved – send from Outlook"), "Sent": ("Sent",), "Rejected / failed": ("Rejected", "Failed")}[tab]
+    items = [e for e in d["emails"] if e["status"] in want]
+    if not items:
+        st.info("No emails in this list.")
+        return
+    lab = {e["id"]: f"{e['status']} · {e['type']} · {e.get('ref') or ''} · {e.get('supplier') or ''} · {e['created'][:10]}"
+           for e in items}
+    eid = st.selectbox("Email", [e["id"] for e in items], format_func=lambda i: lab[i], key="em_sel")
+    e = next(x for x in items if x["id"] == eid)
+    editable = e["status"] == "Draft"
+    c1, c2 = st.columns([3, 2])
+    with c1:
+        with st.form(f"edit_{eid}"):
+            to = st.text_input("To", value=e["to"], disabled=not editable)
+            cc = st.text_input("CC", value=e["cc"], disabled=not editable)
+            subject = st.text_input("Subject", value=e["subject"], disabled=not editable)
+            body = st.text_area("Body", value=e["body"], height=360, disabled=not editable)
+            saved = st.form_submit_button("💾 Save as draft", disabled=not editable)
+        if saved:
+            problems = bad_emails(to) + bad_emails(cc)
+            if problems:
+                st.error("Invalid email address: " + ", ".join(problems))
+            else:
+                _email_set(e, to=to, cc=cc, subject=subject, body=body)
+                _log_email(e, "Draft edited")
+                commit("Email draft saved")
+                st.rerun()
+    with c2:
+        st.markdown("**Preview**")
+        atts = e.get("attachments") or []
+        st.markdown(f"<div class='pcard'><div class='meta'><span><b>To:</b> {e['to'] or '—'}</span></div>"
+                    f"<div class='meta'><span><b>CC:</b> {e['cc'] or '—'}</span></div>"
+                    f"<div class='meta'><span><b>Subject:</b> {e['subject']}</span></div>"
+                    f"<div class='meta'><span><b>Attachments:</b> {', '.join(atts) if atts else 'none'}</span></div></div>",
+                    unsafe_allow_html=True)
+        st.text(e["body"][:3000])
+        missing = [a for a in atts if att_load(a) is None]
+        if missing:
+            st.warning("Attachment not found: " + ", ".join(missing) + ". Upload it on the Purchase Orders page.")
+        problems = (["No recipient (To)"] if not split_emails(e["to"]) else []) + [f"Invalid: {x}" for x in bad_emails(e["to"]) + bad_emails(e["cc"])]
+        if problems:
+            st.error(" · ".join(problems))
+        if e.get("error"):
+            st.error(f"Last send error: {e['error']}")
+        if e["status"] == "Sent":
+            st.success(f"Sent {e.get('sent_at')} ({e.get('method')}) to {e['to']}")
+        st.divider()
+        if editable:
+            ok = st.checkbox("I have reviewed recipient, CC, subject, body and attachments", key=f"rev_{eid}")
+            if smtp:
+                if st.button("✅ Approve & Send", type="primary", disabled=not ok or bool(problems), key=f"send_{eid}"):
+                    if e["status"] == "Sent":
+                        st.warning("Already sent.")
+                    else:
+                        try:
+                            smtp_send(e)
+                            _email_set(e, status="Sent", sent_at=datetime.now().isoformat(timespec="seconds"), method="SMTP",
+                                       error=None)
+                            _log_email(e, "Sent", "SMTP")
+                            commit(f"Email sent: {e['subject']}")
+                            st.rerun()
+                        except Exception as ex:  # noqa: BLE001
+                            _email_set(e, error=str(ex)[:300])
+                            _log_email(e, "Send failed", str(ex)[:300])
+                            commit("Email send failed – draft kept")
+                            st.error(f"Sending failed, the draft is kept: {ex}")
+            else:
+                if st.button("✅ Approve – prepare for Outlook", type="primary", disabled=not ok or bool(problems), key=f"appr_{eid}"):
+                    _email_set(e, status="Approved – send from Outlook")
+                    _log_email(e, "Approved", "for manual sending from Outlook")
+                    commit(f"Email approved: {e['subject']}")
+                    st.rerun()
+            with st.popover("✖ Reject"):
+                reason = st.text_input("Reason", key=f"rej_{eid}")
+                if st.button("Confirm reject", key=f"rejb_{eid}"):
+                    _email_set(e, status="Rejected")
+                    _log_email(e, "Rejected", reason)
+                    commit("Email rejected")
+                    st.rerun()
+        if e["status"] == "Approved – send from Outlook":
+            st.download_button("⬇ Download .eml (opens as a draft in Outlook)", build_eml(e),
+                               file_name=re.sub(r"[^A-Za-z0-9._-]+", "_", e["subject"])[:80] + ".eml", mime="message/rfc822",
+                               type="primary", key=f"eml_{eid}")
+            st.caption("Open the file → check it → Send from Outlook. Then come back and click Mark as sent.")
+            if st.button("📨 Mark as sent", key=f"mark_{eid}"):
+                _email_set(e, status="Sent", sent_at=datetime.now().isoformat(timespec="seconds"), method="Outlook (manual)")
+                _log_email(e, "Sent", "marked as sent from Outlook")
+                commit(f"Email marked as sent: {e['subject']}")
+                st.rerun()
+            if st.button("↩ Back to draft", key=f"back_{eid}"):
+                _email_set(e, status="Draft")
+                _log_email(e, "Returned to draft")
+                commit("Email returned to draft")
+                st.rerun()
+        if e["status"] in ("Sent", "Rejected", "Failed"):
+            if st.button("⧉ Copy as a new draft", key=f"copy_{eid}"):
+                make_draft(e["type"], e["ref"], e["supplier"], e["to"], e["cc"], e["subject"], e["body"], list(e["attachments"]),
+                           source=f"copy of {e['id']}")
+                commit("Draft copied")
+                st.rerun()
+
+
+def page_followups():
+    header("Supplier Follow-ups", "Pending supplier actions found in RFQs, POs and NPD activities. Create follow-up drafts. "
+                                  "They go to the Email Approval Centre for your approval.")
+    items = followup_items()
+    if not items:
+        st.success("No pending supplier actions.")
+        st.caption("Follow-ups come from: RFQ status / quote due date, PO approval + acknowledgement + promised date, "
+                   "and delayed sample steps in NPD projects.")
+        return
+    df = pd.DataFrame([{"Type": i["type"], "Supplier": i.get("supplier") or "(not linked)", "Reference": i["ref"],
+                        "Part": i.get("part"), "Project": i.get("project"), "Detail": i.get("detail"), "Days": i.get("days"),
+                        "Email": i.get("email")} for i in items])
+    c1, c2 = st.columns(2)
+    tf = c1.multiselect("Type", sorted(df["Type"].unique()), key="fu_t")
+    sf = c2.multiselect("Supplier", sorted(df["Supplier"].unique()), key="fu_s")
+    f = df.copy()
+    if tf:
+        f = f[f["Type"].isin(tf)]
+    if sf:
+        f = f[f["Supplier"].isin(sf)]
+    k = st.columns(4)
+    for col, (lab, v) in zip(k, [("Pending items", len(f)), ("Suppliers", f["Supplier"].nunique()),
+                                  ("Overdue material", int((f["Type"] == "Overdue material").sum())),
+                                  ("Ack / ETA pending", int(f["Type"].isin(["PO acknowledgement pending", "Supplier ETA pending"]).sum()))]):
+        with col:
+            kpi(lab, v)
+    st.dataframe(f, hide_index=True, width="stretch", height=380,
+                 column_config={"Days": st.column_config.NumberColumn(format="%d")})
+    st.markdown('<div class="section">Create follow-up drafts</div>', unsafe_allow_html=True)
+    sups = sorted(s for s in f["Supplier"].unique() if s != "(not linked)")
+    pick = st.multiselect("Suppliers to follow up (one email per supplier)", sups, default=sups, key="fu_pick")
+    esc = st.checkbox("Escalation tone", key="fu_esc")
+    use_ai = ai_cfg() is not None and st.checkbox("Improve wording with AI (OpenAI)", key="fu_ai")
+    if st.button("Create drafts", type="primary", disabled=not pick):
+        n = 0
+        for sup in pick:
+            its = [i for i in items if (i.get("supplier") or "") == sup and (not tf or i["type"] in tf)]
+            if not its:
+                continue
+            to, cc, subject, body = followup_email(sup, its, escalate=esc)
+            if use_ai:
+                body = ai_rewrite(body) or body
+            make_draft("Escalation" if esc else "Follow-up", ", ".join(sorted({i["ref"] for i in its}))[:120], sup, to, cc,
+                       subject, body, source="follow-up")
+            n += 1
+        commit(f"{n} follow-up draft(s) created")
+        st.session_state.flash_info = f"{n} draft(s) created. Review them in the Email Approval Centre. Nothing has been sent."
+        st.rerun()
+    nl = df[df["Supplier"] == "(not linked)"]
+    if len(nl):
+        st.caption(f"{len(nl)} item(s) come from NPD projects with no supplier linked; follow these up from the project.")
+
+
+def page_inventory():
+    header("Inventory & Shortage Prediction",
+           "Projected stock = current stock + confirmed incoming − forecast consumption. Only POs that are acknowledged "
+           "and have a promised date count as incoming. Unconfirmed quantities are shown but not counted.")
+    view = st.radio("View", ["Risk overview", "Edit inventory data"], horizontal=True, label_visibility="collapsed", key="inv_view")
+    if view == "Edit inventory data":
+        excel_grid(spec_coll("inventory"), computed=inv_calc, height=440,
+                   help_text="Open PO Qty (manual) and Confirmed Delivery Date are used only when the part has no lines in "
+                             "Purchase Orders.")
+        return
+    res = inventory_projection()
+    if not res:
+        st.info("No inventory data yet. Switch to 'Edit inventory data' and add parts (or import from Excel in Settings & Data).")
+        return
+    k = st.columns(5)
+    cnt = {r: sum(1 for x in res if x["risk"] == r) for r in ("RED", "YELLOW", "GREEN")}
+    vals = [("Critical (RED)", cnt["RED"], COLORS["bad"]), ("Watch (YELLOW)", cnt["YELLOW"], COLORS["warn"]),
+            ("OK (GREEN)", cnt["GREEN"], COLORS["ok"]), ("Reorder needed", sum(1 for x in res if x["reorder"]), COLORS["warn"]),
+            ("Supplier delivery risk", sum(1 for x in res if "Supplier delivery risk" in x["flags"]), COLORS["bad"])]
+    for col, (lab, v, c) in zip(k, vals):
+        with col:
+            kpi(lab, v, "parts", value_color=c if v else None)
+    weeks = len(res[0]["proj"]) - 1
+    heads = "".join(f"<th>{'Today' if w == 0 else (today() + timedelta(days=7 * w)).strftime('%d %b')}</th>" for w in range(weeks + 1))
+    rows = []
+    order = {"RED": 0, "YELLOW": 1, "GREEN": 2}
+    for x in sorted(res, key=lambda x: (order[x["risk"]], x["short_w"] if x["short_w"] is not None else 99)):
+        inv = x["inv"]
+        cells = []
+        for v, vmin in zip(x["proj"], x["projmin"]):
+            c = COLORS["bad"] if vmin < 0 else (COLORS["warn"] if vmin < x["safety"] else COLORS["ok"])
+            cells.append(f"<td title='end of week {v:,.0f} · lowest {vmin:,.0f}' style='background:{c};color:#fff;"
+                         f"text-align:center;font-size:11px'>{v:,.0f}</td>")
+        badge = {"RED": COLORS["bad"], "YELLOW": COLORS["warn"], "GREEN": COLORS["ok"]}[x["risk"]]
+        rows.append(f"<tr><td style='white-space:nowrap'><b>{inv.get('part_no') or ''}</b><br><span style='color:#5D6B7C;font-size:11px'>"
+                    f"{(inv.get('part_name') or '')[:40]}</span></td><td style='text-align:right'>{num(inv.get('stock')) or 0:,.0f}</td>"
+                    f"<td style='text-align:right'>{x['safety']:,.0f}</td><td style='text-align:right'>"
+                    f"{'' if x['coverage'] is None else x['coverage']}</td>"
+                    f"<td><span class='pill' style='background:{badge};color:#fff'>{x['risk']}</span></td>" + "".join(cells) + "</tr>")
+    st.markdown('<div class="section">Projected inventory by week</div>', unsafe_allow_html=True)
+    st.markdown("<div style='overflow-x:auto'><table style='border-collapse:separate;border-spacing:3px;font-size:12px;width:100%'>"
+                "<thead><tr style='color:#5D6B7C;font-size:11px'><th style='text-align:left'>Part</th><th>Stock</th><th>Safety</th>"
+                f"<th>Cover (days)</th><th>Risk</th>{heads}</tr></thead><tbody>{''.join(rows)}</tbody></table></div>",
+                unsafe_allow_html=True)
+    st.caption("Colour = lowest level during the week (green ≥ safety stock · yellow below safety · red stock-out). "
+               "Number = projected units at week end. Overdue or unacknowledged POs are not counted.")
+    st.markdown('<div class="section">Risk details</div>', unsafe_allow_html=True)
+    det = pd.DataFrame([{"Part No": x["inv"].get("part_no"), "Part Name": x["inv"].get("part_name"), "Risk": x["risk"],
+                         "Daily Cons.": x["daily"], "Coverage (days)": x["coverage"], "Reorder Qty": x["reorder"] or None,
+                         "Confirmed incoming": sum(q for _, q, _ in x["confirmed"]) or None,
+                         "Unconfirmed (not counted)": x["unconfirmed"] or None, "Flags": ", ".join(x["flags"])} for x in res])
+    st.dataframe(det, hide_index=True, width="stretch")
+    pick = st.selectbox("Incoming supply detail for part", [x["inv"].get("part_no") for x in res], key="inv_pick")
+    x = next(r for r in res if r["inv"].get("part_no") == pick)
+    if x["confirmed"]:
+        st.dataframe(pd.DataFrame([{"Date": dt, "Qty": q, "Source": src} for dt, q, src in x["confirmed"]]), hide_index=True)
+    else:
+        st.caption("No confirmed incoming supply.")
+    if x["unconfirmed"]:
+        st.warning(f"{x['unconfirmed']:,.0f} units on order are not confirmed (no acknowledgement or promised date) "
+                   "and are not counted.")
+
+
+def page_dv():
+    header("DV / DVVP Tracking", "Design validation status per part and supplier.")
+    excel_grid(spec_coll("dv"), dropdowns={k: v for k, v in {"status": DV_STATUS, "project": project_options(),
+                                                            "supplier": supplier_options()}.items() if v}, height=440)
+
+
+def page_ecn():
+    header("ECN / ECR Tracking", "Engineering change notes and requests linked to alternate development.")
+    excel_grid(spec_coll("ecn"), dropdowns={k: v for k, v in {"status": ECN_STATUS, "type": ["ECN", "ECR"],
+                                                             "project": project_options()}.items() if v}, height=440)
+
+
+# ---------------------------------------------------------------------------------------------- AI assistant
+def ai_cfg():
+    try:
+        c = st.secrets.get("openai", None)
+    except Exception:  # noqa: BLE001
+        return None
+    return {"key": c["api_key"], "model": c.get("model") or S_().get("ai_model") or "gpt-4o-mini"} if c and c.get("api_key") else None
+
+
+def _ai_call(messages):
+    import requests
+    cfg = ai_cfg()
+    r = requests.post("https://api.openai.com/v1/chat/completions", timeout=60,
+                      headers={"Authorization": f"Bearer {cfg['key']}"},
+                      json={"model": cfg["model"], "messages": messages, "temperature": 0.2})
+    if r.status_code != 200:
+        raise RuntimeError(f"OpenAI {r.status_code}: {r.text[:200]}")
+    return r.json()["choices"][0]["message"]["content"]
+
+
+def ai_rewrite(body):
+    try:
+        return _ai_call([{"role": "system", "content": "Rewrite this supplier email to be clear, professional and firm. "
+                                                       "Keep every fact, number, PO/RFQ reference and date exactly. Do not add facts."},
+                         {"role": "user", "content": body}])
+    except Exception as ex:  # noqa: BLE001
+        st.warning(f"AI rewrite failed, template text kept: {ex}")
+        return None
+
+
+def ai_context():
+    lines = po_lines()
+    fu = followup_items()
+    inv = inventory_projection()
+    acts = activities_df(D())
+    delayed = acts[acts["Status"] == "Delayed"][["Project", "Activity", "Plan Date", "Days Late"]] if not acts.empty else pd.DataFrame()
+    return {
+        "today": today().isoformat(),
+        "kpis": proc_kpis(),
+        "overdue_po_lines": [{k: r.get(k) for k in ("po_no", "part_no", "supplier", "promised_date", "Balance Qty", "Delay (days)")}
+                             for r in lines if r["PO Status"] in ("Overdue", "Partial – overdue")],
+        "ack_pending": [{k: r.get(k) for k in ("po_no", "supplier", "po_date")} for r in lines if r["PO Status"] == "Ack pending"],
+        "eta_pending": [{k: r.get(k) for k in ("po_no", "supplier", "part_no")} for r in lines if r["PO Status"] == "ETA pending"],
+        "followups": [{k: i.get(k) for k in ("type", "supplier", "ref", "detail", "days")} for i in fu][:80],
+        "inventory_risk": [{"part_no": x["inv"].get("part_no"), "risk": x["risk"], "flags": x["flags"]} for x in inv if x["risk"] != "GREEN"],
+        "delayed_npd_activities": json.loads(delayed.head(60).to_json(orient="records", date_format="iso")) if len(delayed) else [],
+        "projects": [{"name": p["name"], "status": p["status"], **{k: v for k, v in proj_stats(p).items() if k in ("done", "total")},
+                      "delayed": len(proj_stats(p)["late"])} for p in D()["projects"]],
+    }
+
+
+def _answer(topic):
+    """Rule-based answers computed from the app data (no AI needed)."""
+    lines = po_lines()
+    if topic == "eta":
+        rows = [r for r in lines if r["PO Status"] == "ETA pending"]
+        return "Suppliers that have acknowledged but not confirmed an ETA", pd.DataFrame(
+            [{"Supplier": r.get("supplier"), "PO": r.get("po_no"), "Part": r.get("part_no"), "PO date": r.get("po_date")} for r in rows])
+    if topic == "overdue":
+        rows = [r for r in lines if r["PO Status"] in ("Overdue", "Partial – overdue")]
+        return "Overdue PO lines", pd.DataFrame([{"PO": r.get("po_no"), "Supplier": r.get("supplier"), "Part": r.get("part_no"),
+                                                  "Promised": r.get("promised_date"), "Balance": r["Balance Qty"],
+                                                  "Days late": r["Delay (days)"]} for r in rows]).sort_values("Days late", ascending=False) if rows else pd.DataFrame()
+    if topic == "stock":
+        res = [x for x in inventory_projection() if x["risk"] != "GREEN" or "Critical stock" in x["flags"]]
+        return "Materials with critical stock / shortage risk", pd.DataFrame(
+            [{"Part": x["inv"].get("part_no"), "Name": x["inv"].get("part_name"), "Risk": x["risk"], "Coverage (days)": x["coverage"],
+              "Flags": ", ".join(x["flags"])} for x in res])
+    if topic == "npd":
+        rows = []
+        for p in D()["projects"]:
+            s = proj_stats(p)
+            if s["late"]:
+                worst = max(s["late"], key=lambda l: l["days"])
+                rows.append({"Project": p["name"], "Status": p["status"], "Delayed activities": len(s["late"]),
+                             "Worst": f"{worst['act']} ({worst['days']} d)"})
+        return "NPD projects with delayed activities", pd.DataFrame(rows).sort_values("Delayed activities", ascending=False) if rows else pd.DataFrame()
+    if topic == "ack":
+        rows = [r for r in lines if r["PO Status"] == "Ack pending"]
+        return "Suppliers with pending PO acknowledgements", pd.DataFrame(
+            [{"Supplier": r.get("supplier"), "PO": r.get("po_no"), "PO date": r.get("po_date"), "Part": r.get("part_no")} for r in rows])
+    if topic == "summary":
+        fu = followup_items()
+        k = proc_kpis()
+        txt = (f"**{k['pos']}** POs · **{k['pending_approval']}** awaiting approval · **{k['ack_pending']}** ack pending · "
+               f"**{k['eta_pending']}** ETA pending · **{k['overdue']}** overdue lines · **{len(fu)}** supplier follow-ups · "
+               f"**{k['samples']}** projects with pending samples · **{k['dv']}** pending DV/DVVP · **{k['ecn']}** open ECN/ECR · "
+               f"**{k['drafts']}** emails awaiting your approval.")
+        g = pd.DataFrame(fu).groupby("type").size().reset_index(name="items").rename(columns={"type": "Pending activity"}) if fu else pd.DataFrame()
+        return txt, g
+    return None, None
+
+
+QUICK_Q = {"Which suppliers have not confirmed their ETA?": "eta", "Which POs are overdue?": "overdue",
+           "Which materials have critical stock?": "stock", "Which NPD projects are delayed?": "npd",
+           "Which suppliers have pending acknowledgements?": "ack", "Summarize pending procurement activities": "summary"}
+
+
+def _route(q):
+    ql = q.lower()
+    for pat, t in ((r"eta|delivery date", "eta"), (r"overdue|late po|delay.*po", "overdue"), (r"stock|shortage|inventory|material", "stock"),
+                   (r"npd|project|develop", "npd"), (r"ack", "ack"), (r"summar|pending|status", "summary")):
+        if re.search(pat, ql):
+            return t
+    return None
+
+
+def page_ai():
+    header("AI Assistant", "Answers come from the data in this app. Nothing is invented.")
+    cfg = ai_cfg()
+    st.caption("🟢 OpenAI connected: free-text questions are answered from your data." if cfg else
+               "⚪ OpenAI not connected: built-in answers from your data. Add [openai] api_key in Streamlit Secrets to enable free-text AI.")
+    cols = st.columns(3)
+    for i, (q, t) in enumerate(QUICK_Q.items()):
+        if cols[i % 3].button(q, key=f"q_{t}", width="stretch"):
+            st.session_state.ai_q = q
+            st.session_state.ai_topic = t
+    q = st.text_input("Ask a question", value=st.session_state.get("ai_q", ""), key="ai_free")
+    if st.button("Ask", type="primary") and q:
+        st.session_state.ai_q = q
+        st.session_state.ai_topic = None
+    q = st.session_state.get("ai_q")
+    if q:
+        topic = st.session_state.get("ai_topic") or _route(q)
+        st.markdown(f"**Q:** {q}")
+        if cfg and not st.session_state.get("ai_topic"):
+            try:
+                ans = _ai_call([{"role": "system", "content": "You are a procurement analyst for Sun Mobility. Answer ONLY from the JSON "
+                                                              "data provided. If the data does not contain the answer, say so. Use "
+                                                              "concise bullets and include PO/part/supplier references."},
+                                {"role": "user", "content": f"DATA:\n{json.dumps(ai_context(), default=str)[:60000]}\n\nQUESTION: {q}"}])
+                st.markdown(ans)
+                st.caption("AI answer based on the app data sent with the question.")
+            except Exception as ex:  # noqa: BLE001
+                st.error(f"AI call failed: {ex}")
+        if topic:
+            title, df = _answer(topic)
+            st.markdown(f"**{title}**")
+            if df is not None and len(df):
+                st.dataframe(df, hide_index=True, width="stretch")
+            elif topic != "summary":
+                st.success("Nothing found in the current data.")
+        elif not cfg:
+            st.info("I can answer: ETA pending, overdue POs, critical stock, delayed NPD projects, pending acknowledgements, "
+                    "summary, or generate an escalation email (below).")
+    st.markdown('<div class="section">Generate an escalation email</div>', unsafe_allow_html=True)
+    fu = followup_items()
+    sups = sorted({i["supplier"] for i in fu if i.get("supplier")})
+    if not sups:
+        st.caption("No supplier has pending items to escalate.")
+        return
+    sup = st.selectbox("Supplier", sups, key="esc_sup")
+    its = [i for i in fu if i.get("supplier") == sup]
+    st.caption(f"{len(its)} pending item(s): " + ", ".join(sorted({i['type'] for i in its})))
+    if st.button("Create escalation draft"):
+        to, cc, subject, body = followup_email(sup, its, escalate=True)
+        if cfg:
+            body = ai_rewrite(body) or body
+        make_draft("Escalation", ", ".join(sorted({i["ref"] for i in its}))[:120], sup, to, cc, subject, body, source="AI assistant")
+        commit(f"Escalation draft created for {sup}")
+        st.session_state.flash_info = "Escalation draft created in the Email Approval Centre. Nothing has been sent."
+        st.rerun()
+
+
+# ---------------------------------------------------------------------------------------------- reports
+def _table_export(title_rows, sheet):
+    wb = openpyxl.Workbook()
+    wb.remove(wb.active)
+    for name, aoa, widths, money in title_rows:
+        _write_table(wb.create_sheet(name[:31]), aoa, widths, money_cols=money)
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
+
+
+def coll_aoa(t, extra=None):
+    m = tmeta(D(), t)
+    cols = vis(m)
+    recs = D()[TABLE_DEFS[t]["coll"]]
+    ex_titles = list(extra({}).keys()) if extra else []
+    aoa = [[m["labels"][c] for c in cols] + ex_titles]
+    for r in recs:
+        e = extra(r) if extra else {}
+        aoa.append([r.get(c) for c in cols] + [e.get(x) for x in ex_titles])
+    return aoa
+
+
+def page_reports():
+    header("Reports", "Excel downloads. Original Excel files are never overwritten: every download is a new file.")
+    stamp = datetime.now().strftime("%Y-%m-%d_%H%M")
+    xl = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ss = st.session_state
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown('<div class="section">NPD</div>', unsafe_allow_html=True)
+        if ss.get("orig_bytes"):
+            st.download_button("⬇ NPD master Excel (your format, updated)", formatted_export(ss.orig_bytes, D()),
+                               file_name=f"NPD_Master_Tracker_{stamp}.xlsx", mime=xl, width="stretch")
+        else:
+            st.caption("Upload the master Excel in Settings & Data to enable the formatted NPD download.")
+        st.download_button("⬇ NPD report (all sheets, clean)", clean_export(D()), file_name=f"NPD_Report_{stamp}.xlsx",
+                           mime=xl, width="stretch")
+        st.markdown('<div class="section">Purchase orders</div>', unsafe_allow_html=True)
+        st.download_button("⬇ PO report", _table_export([("PO Lines", coll_aoa("pos", po_calc), [14] * 24, ())], "pos"),
+                           file_name=f"PO_Report_{stamp}.xlsx", mime=xl, width="stretch")
+    with c2:
+        st.markdown('<div class="section">Suppliers</div>', unsafe_allow_html=True)
+        fu = followup_items()
+        aoa = [["Type", "Supplier", "Reference", "Part", "Project", "Detail", "Days pending", "Email"]] + [
+            [i["type"], i.get("supplier"), i["ref"], i.get("part"), i.get("project"), i.get("detail"), i.get("days"), i.get("email")]
+            for i in fu]
+        st.download_button("⬇ Supplier pending report", _table_export([("Supplier Pending", aoa, [26, 24, 18, 14, 22, 40, 12, 26], ())], "fu"),
+                           file_name=f"Supplier_Pending_{stamp}.xlsx", mime=xl, width="stretch")
+        st.markdown('<div class="section">Inventory</div>', unsafe_allow_html=True)
+        res = inventory_projection()
+        weeks = len(res[0]["proj"]) if res else 0
+        aoa = [["Part No", "Part Name", "Risk", "Stock", "Safety", "Daily Cons.", "Coverage (days)", "Reorder Qty",
+                "Confirmed incoming", "Unconfirmed (not counted)", "Flags"] +
+               [("Today" if w == 0 else (today() + timedelta(days=7 * w)).strftime("%d-%b")) for w in range(weeks)]]
+        for x in res:
+            aoa.append([x["inv"].get("part_no"), x["inv"].get("part_name"), x["risk"], num(x["inv"].get("stock")), x["safety"],
+                        x["daily"], x["coverage"], x["reorder"], sum(q for _, q, _ in x["confirmed"]), x["unconfirmed"],
+                        ", ".join(x["flags"])] + x["proj"])
+        st.download_button("⬇ Material shortage report", _table_export([("Shortage", aoa, [14, 28, 9] + [12] * (8 + weeks), ())], "inv"),
+                           file_name=f"Material_Shortage_{stamp}.xlsx", mime=xl, width="stretch")
+        st.markdown('<div class="section">Other trackers</div>', unsafe_allow_html=True)
+        st.download_button("⬇ RFQ, DV/DVVP, ECN and suppliers (one workbook)",
+                           _table_export([("Suppliers", coll_aoa("suppliers"), [16] * 12, ()), ("RFQ", coll_aoa("rfq"), [16] * 12, ()),
+                                          ("DV-DVVP", coll_aoa("dv"), [16] * 14, ()), ("ECN-ECR", coll_aoa("ecn"), [16] * 14, ())], "all"),
+                           file_name=f"Trackers_{stamp}.xlsx", mime=xl, width="stretch")
+
+
+# ---------------------------------------------------------------------------------------------- settings, import, versions
+IMPORT_TARGETS = {"Suppliers": "suppliers", "RFQs": "rfq", "Purchase orders": "pos", "Inventory": "inventory",
+                  "DV/DVVP": "dv", "ECN/ECR": "ecn"}
+
+
+def _import_table():
+    st.markdown('<div class="section">Import a tracker (Excel / CSV)</div>', unsafe_allow_html=True)
+    tgt_lab = st.selectbox("Import into", list(IMPORT_TARGETS), key="imp_t")
+    t = IMPORT_TARGETS[tgt_lab]
+    f = st.file_uploader("File", type=["xlsx", "xlsm", "csv"], key="imp_f")
+    if f is None:
+        return
+    try:
+        if f.name.lower().endswith(".csv"):
+            raw = pd.read_csv(f, dtype=object)
+        else:
+            xls = pd.ExcelFile(f)
+            sh = st.selectbox("Sheet", xls.sheet_names, key="imp_sh")
+            hdr = st.number_input("Header row number", min_value=1, value=1, step=1, key="imp_hr")
+            raw = pd.read_excel(xls, sheet_name=sh, header=int(hdr) - 1, dtype=object)
+    except Exception as ex:  # noqa: BLE001
+        st.error(f"Could not read the file: {ex}")
+        return
+    raw = raw.dropna(how="all")
+    m = tmeta(D(), t)
+    fields = [c for c in TABLE_DEFS[t]["core"] if c != "_id"]
+    cols = ["(skip)"] + [str(c) for c in raw.columns]
+    st.caption("Match your columns to the app fields (auto-matched by name, change where needed).")
+    mapping = {}
+    grid = st.columns(3)
+    for i, fld in enumerate(fields):
+        lab = m["labels"][fld]
+        guess = next((c for c in raw.columns if _nk(c) == _nk(lab) or _nk(c) == _nk(fld)), None)
+        mapping[fld] = grid[i % 3].selectbox(lab, cols, index=cols.index(str(guess)) if guess is not None else 0, key=f"imp_{t}_{fld}")
+    mode = st.radio("Mode", ["Append (skip duplicates)", "Replace all existing rows"], horizontal=True, key="imp_mode")
+    st.dataframe(raw.head(5), hide_index=True)
+    if st.button(f"Import {len(raw)} row(s)", type="primary"):
+        recs = []
+        for _, row in raw.iterrows():
+            rec = {"_id": new_id()}
+            for fld, col in mapping.items():
+                if col != "(skip)":
+                    v = row[col]
+                    rec[fld] = _from_cell(None if (isinstance(v, float) and pd.isna(v)) else jsonable(v.to_pydatetime() if hasattr(v, "to_pydatetime") else v),
+                                          _ctype(m, t, fld))
+            if any(not blank(rec.get(f)) for f in fields):
+                recs.append(rec)
+        coll = TABLE_DEFS[t]["coll"]
+        base = [] if mode.startswith("Replace") else list(D()[coll])
+        u = TABLE_DEFS[t]["unique"] or []
+        keyf = (lambda r: tuple(str(r.get(x) or "").strip().lower() for x in u))
+        have = {keyf(r) for r in base}
+        added = skipped = 0
+        for r in recs:
+            if u and keyf(r)[0] and keyf(r) in have:
+                skipped += 1
+                continue
+            base.append(r)
+            have.add(keyf(r))
+            added += 1
+        D()[coll] = base
+        commit(f"Imported {added} row(s) into {tgt_lab} ({skipped} duplicate(s) skipped)")
+        st.rerun()
+
+
+def _versions():
+    st.markdown('<div class="section">Version history (backups)</div>', unsafe_allow_html=True)
+    cfg = gh_cfg()
+    if not cfg:
+        st.caption("Every save is a backup when GitHub saving is on. It is off now. Use the JSON backup download instead.")
+        return
+    if st.button("Load recent versions"):
+        r = _gh("GET", "/commits", cfg, params={"sha": cfg["branch"], "path": cfg["path"], "per_page": 20})
+        st.session_state.versions = [{"sha": c["sha"], "date": c["commit"]["author"]["date"], "msg": c["commit"]["message"]}
+                                     for c in r.json()] if r.status_code == 200 else []
+    vs = st.session_state.get("versions") or []
+    if vs:
+        pick = st.selectbox("Version", vs, format_func=lambda v: f"{v['date'][:16].replace('T', ' ')} · {v['msg'][:70]}", key="ver_pick")
+        conf = st.checkbox("Restore this version (the current data is kept in history)", key="ver_conf")
+        if st.button("Restore", disabled=not conf):
+            import base64
+            r = _gh("GET", f"/contents/{cfg['path']}", cfg, params={"ref": pick["sha"]})
+            if r.status_code == 200:
+                raw = base64.b64decode(r.json()["content"]) if r.json().get("content") else base64.b64decode(
+                    _gh("GET", f"/git/blobs/{r.json()['sha']}", cfg).json()["content"])
+                st.session_state.data = parse_backup(raw)
+                commit(f"Restored version from {pick['date'][:16]}")
+                st.rerun()
+            else:
+                st.error(f"Could not load that version ({r.status_code}).")
+
+
+def page_settings():
+    header("Settings & Data", "Company details for emails, follow-up rules, integrations, imports, backups.")
+    view = st.radio("Section", ["Settings", "Load / download NPD data", "Import trackers", "Version history"], horizontal=True,
+                    key="set_view", label_visibility="collapsed")
+    if view == "Load / download NPD data":
+        page_data()
+        return
+    if view == "Import trackers":
+        _import_table()
+        return
+    if view == "Version history":
+        _versions()
+        return
+    s = S_()
+    with st.form("settings"):
+        c1, c2 = st.columns(2)
+        company = c1.text_input("Company name", s.get("company"))
+        team = c2.text_input("Team name (email signature)", s.get("team"))
+        sname = c1.text_input("Sender name", s.get("sender_name"))
+        semail = c2.text_input("Sender email (From)", s.get("sender_email"))
+        dcc = c1.text_input("Default CC on supplier emails", s.get("default_cc"))
+        sig = c2.text_input("Extra signature line (phone etc.)", s.get("signature"))
+        ack = c1.number_input("Follow up PO acknowledgement after (days)", 0, 60, int(num(s.get("ack_days")) or 2))
+        hz = c2.number_input("Inventory projection horizon (weeks)", 4, 26, int(num(s.get("horizon_weeks")) or 12))
+        model = c1.text_input("OpenAI model", s.get("ai_model") or "gpt-4o-mini")
+        if st.form_submit_button("Save settings", type="primary"):
+            problems = bad_emails(semail) + bad_emails(dcc)
+            if problems:
+                st.error("Invalid email: " + ", ".join(problems))
+            else:
+                s.update(company=company, team=team, sender_name=sname, sender_email=semail, default_cc=dcc, signature=sig,
+                         ack_days=int(ack), horizon_weeks=int(hz), ai_model=model)
+                commit("Settings saved")
+                st.rerun()
+    st.markdown('<div class="section">Integrations</div>', unsafe_allow_html=True)
+    rows = [("Permanent saving (GitHub)", "🟢 On" if gh_cfg() else "⚪ Off", "Secrets → [github]"),
+            ("Email sending (SMTP)", "🟢 On" if smtp_cfg() else "⚪ Off — drafts open in Outlook (.eml)",
+             "Secrets → [smtp] host, port, username, password, from_addr"),
+            ("AI (OpenAI)", "🟢 On" if ai_cfg() else "⚪ Off — built-in answers", "Secrets → [openai] api_key")]
+    st.dataframe(pd.DataFrame(rows, columns=["Integration", "Status", "How to enable"]), hide_index=True, width="stretch")
+    st.caption("Passwords and API keys are read only from Streamlit Secrets. They are never stored in the data file.")
+
+
+# ---------------------------------------------------------------------------------------------- Split AC PBOM (buyer view)
+PBOM_PARAMS = {"p1r5_plan": ("P1R5 plan (month)", 211), "p1r5_fg": ("P1R5 FG", 73), "wip": ("WIP", 24),
+               "sp_wip": ("SP WIP", 0), "sp_plan": ("Single Phs plan (month)", 29), "sp_fg": ("Single Phs FG", 4)}
+
+
+def pbom_params() -> dict:
+    p = S_().setdefault("pbom", {})
+    for k, (_, dv) in PBOM_PARAMS.items():
+        p.setdefault(k, dv)
+    p.setdefault("buyer", "Hemanth")
+    p.setdefault("title", "Split AC + Delta Charger – Master PBOM")
+    p["bal_p1r5"] = (num(p["p1r5_plan"]) or 0) - (num(p["p1r5_fg"]) or 0) - (num(p["wip"]) or 0)
+    p["bal_sp"] = (num(p["sp_plan"]) or 0) - (num(p["sp_fg"]) or 0)
+    return p
+
+
+def _pbom_kind(project) -> str:
+    s = str(project or "").strip().lower()
+    return "common" if s.startswith("common") else ("sp" if s.startswith("single") else "p1r5")
+
+
+def pbom_calc(r: dict) -> dict:
+    """Same formulas as the Master PBOM sheet, chosen by Project:
+    Common:     Build = (WIP+SP WIP)×P1R5 Qty · Coverage = SMPL-3 ÷ P1R5 Qty · Shortage = Coverage − (Bal P1R5 + Bal SP)
+    P1R5:       Build = WIP×P1R5 Qty          · Coverage = SMPL-3 ÷ P1R5 Qty · Shortage = Coverage − Bal P1R5
+    Single Phs: Build = SP WIP×Sing Phs Qty   · Coverage = SMPL-3 ÷ Sing Phs Qty · Shortage = Coverage − Bal SP
+    SMPL-3 Stock = (Store Stock + WIP) − Build."""
+    out = {"P1R5 Build": None, "SMPL-3 Stock": None, "Coverage in Sets": None, "Total Shortage in Set": None}
+    if not r or blank(r.get("part_no")):
+        return out
+    p = pbom_params()
+    kind = _pbom_kind(r.get("project"))
+    q1, qs = num(r.get("p1r5_qty")), num(r.get("sp_qty"))
+    stock, wip = num(r.get("store_stock")) or 0, num(r.get("wip")) or 0
+    if kind == "common":
+        build, per, need = ((p["wip"] or 0) + (p["sp_wip"] or 0)) * (q1 or 0), q1, p["bal_p1r5"] + p["bal_sp"]
+    elif kind == "sp":
+        build, per, need = (p["sp_wip"] or 0) * (qs or 0), qs, p["bal_sp"]
+    else:
+        build, per, need = (p["wip"] or 0) * (q1 or 0), q1, p["bal_p1r5"]
+    smpl = stock + wip - build
+    cov = smpl / per if per else None
+    out.update({"P1R5 Build": round(build, 2), "SMPL-3 Stock": round(smpl, 2),
+                "Coverage in Sets": None if cov is None else round(cov, 2),
+                "Total Shortage in Set": None if cov is None else round(cov - need, 2)})
+    return out
+
+
+PBOM_HDR = {"sl": ("sl",), "part_no": ("partno", "partnumber"), "description": ("description",),
+            "p1r5_qty": ("p1r5qty",), "sp_qty": ("singphsqty", "singlephsqty", "singlephaseqty"), "uom": ("uom",),
+            "buyer": ("buyer",), "supplier": ("supplier",), "project": ("project", "projtype"), "insp": ("insp",),
+            "store_stock": ("storestock", "storestockasondate"), "wip": ("wip", "wipasondate"), "remarks": ("remarks",)}
+
+
+def pbom_read(file_bytes, sheet=None):
+    """Read a PBOM sheet (values, not formulas). Returns (sheet names, chosen sheet, rows as dicts)."""
+    wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True, read_only=True)
+    names = wb.sheetnames
+    sheet = sheet or next((n for n in names if n.strip().lower() == "master pbom"), names[0])
+    ws = wb[sheet]
+    hdr_row, cols, rows = None, {}, []
+    for i, row in enumerate(ws.iter_rows(min_row=1, max_row=40, max_col=40, values_only=True), 1):
+        keys = [re.sub(r"[^a-z0-9]", "", str(v or "").lower()) for v in row]
+        if keys and keys[0] == "sl" and any(k in ("partno", "partnumber") for k in keys):
+            hdr_row = i
+            for j, k in enumerate(keys):
+                for fid, syn in PBOM_HDR.items():
+                    if k in syn and fid not in cols:
+                        cols[fid] = j
+            break
+    if hdr_row is None:
+        return names, sheet, None
+    for row in ws.iter_rows(min_row=hdr_row + 1, max_col=max(cols.values()) + 1, values_only=True):
+        rec = {fid: row[j] if j < len(row) else None for fid, j in cols.items()}
+        if blank(rec.get("part_no")) or not isinstance(rec.get("sl"), (int, float)):
+            continue  # skip the 'Receipt plan' / blank helper rows under each part
+        rec["part_no"] = part_no(rec["part_no"])
+        for f in ("buyer", "supplier", "project", "description", "uom", "remarks"):
+            if isinstance(rec.get(f), str):
+                rec[f] = rec[f].strip()
+        rows.append(rec)
+    wb.close()
+    return names, sheet, rows
+
+
+def pbom_excel(recs, p) -> bytes:
+    """Excel with live formulas (same logic as the source sheet)."""
+    from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "PBOM – " + str(p.get("buyer") or "Buyer")[:20]
+    navy, grey = PatternFill("solid", fgColor="1F3864"), PatternFill("solid", fgColor="D9D9D9")
+    th = Side(style="thin", color="9E9E9E")
+    bd = Border(left=th, right=th, top=th, bottom=th)
+    ws["A1"] = p.get("title")
+    ws["A1"].font = Font(bold=True, size=14, color="1F3864")
+    params = [("P1R5 plan", p["p1r5_plan"]), ("P1R5 FG", p["p1r5_fg"]), ("WIP", p["wip"]), ("SP WIP", p["sp_wip"]),
+              ("Single Phs plan", p["sp_plan"]), ("Single Phs FG", p["sp_fg"]),
+              ("Balance P1R5", "=C3-C4-C5"), ("Balance Single Phs", "=C7-C8")]
+    for i, (lab, v) in enumerate(params):
+        r = 3 + i
+        ws.cell(r, 2, lab).font = Font(bold=True)
+        c = ws.cell(r, 3, v)
+        c.font = Font(color="000000" if str(v).startswith("=") else "0000FF", bold=str(v).startswith("="))
+        for cc in (2, 3):
+            ws.cell(r, cc).border = bd
+            ws.cell(r, cc).fill = grey if cc == 2 else PatternFill()
+    # C3 plan, C4 FG, C5 WIP, C6 SP WIP, C7 SP plan, C8 SP FG, C9 Bal P1R5, C10 Bal SP
+    H = 12
+    heads = ["Sl", "Part No", "Description", "P1R5 Qty", "Sing Phs Qty", "Uom", "Buyer", "Supplier", "Project", "Insp",
+             "Store Stock", "WIP", "P1R5 Build", "SMPL-3 Stock", "Coverage in Sets", "Total Shortage in Set", "Remarks"]
+    for j, h in enumerate(heads, 1):
+        c = ws.cell(H, j, h)
+        c.font, c.fill, c.border = Font(bold=True, color="FFFFFF"), navy, bd
+        c.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+    ws.row_dimensions[H].height = 32
+    red = Font(color="C00000", bold=True)
+    for i, r in enumerate(recs):
+        x = H + 1 + i
+        kind = _pbom_kind(r.get("project"))
+        vals = [r.get("sl"), r.get("part_no"), r.get("description"), num(r.get("p1r5_qty")), num(r.get("sp_qty")), r.get("uom"),
+                r.get("buyer"), r.get("supplier"), r.get("project"), num(r.get("insp")), num(r.get("store_stock")), num(r.get("wip"))]
+        if kind == "common":
+            f = [f"=($C$5+$C$6)*D{x}", f"=(K{x}+L{x})-M{x}", f"=IFERROR(N{x}/D{x},\"\")", f"=IFERROR(O{x}-($C$9+$C$10),\"\")"]
+        elif kind == "sp":
+            f = [f"=$C$6*E{x}", f"=(K{x}+L{x})-M{x}", f"=IFERROR(N{x}/E{x},\"\")", f"=IFERROR(O{x}-$C$10,\"\")"]
+        else:
+            f = [f"=$C$5*D{x}", f"=(K{x}+L{x})-M{x}", f"=IFERROR(N{x}/D{x},\"\")", f"=IFERROR(O{x}-$C$9,\"\")"]
+        for j, v in enumerate(vals + f + [r.get("remarks")], 1):
+            c = ws.cell(x, j, v)
+            c.border = bd
+            if j in (15, 16):
+                c.number_format = "0.00;[Red]-0.00"
+            if j in (3, 8, 17):
+                c.alignment = Alignment(wrap_text=True, vertical="center")
+    widths = [6, 13, 34, 9, 9, 7, 11, 30, 11, 7, 10, 9, 10, 11, 11, 12, 26]
+    for j, w in enumerate(widths, 1):
+        ws.column_dimensions[openpyxl.utils.get_column_letter(j)].width = w
+    ws.freeze_panes = ws.cell(H + 1, 3)
+    ws.auto_filter.ref = f"A{H}:Q{H + max(len(recs), 1)}"
+    b = io.BytesIO()
+    wb.save(b)
+    return b.getvalue()
+
+
+def page_pbom():
+    p = pbom_params()
+    header("Split AC PBOM – Buyer View", f"{p['title']} · buyer {p['buyer']} · columns Sl to Remarks with the sheet's formulas")
+    with st.expander("Plan inputs (the sheet's header cells)", expanded=False):
+        with st.form("pbom_par"):
+            c = st.columns(6)
+            vals = {k: c[i].number_input(lab, value=float(num(p[k]) or 0), step=1.0, key=f"pp_{k}")
+                    for i, (k, (lab, _)) in enumerate(PBOM_PARAMS.items())}
+            if st.form_submit_button("Save plan inputs", type="primary"):
+                p.update(vals)
+                commit("PBOM plan inputs updated")
+                st.rerun()
+        st.caption(f"Balance P1R5 = Plan − FG − WIP = **{p['bal_p1r5']:g}** · "
+                   f"Balance Single Phs = SP plan − SP FG = **{p['bal_sp']:g}**")
+    if st.session_state.pop("pbom_goto", None):
+        st.session_state.pbom_view = "Sheet view"
+    view = st.radio("View", ["Sheet view", "Edit (grid)", "Import from Master PBOM"], horizontal=True,
+                    label_visibility="collapsed", key="pbom_view")
+    recs = D()["pbom"]
+    if view == "Import from Master PBOM":
+        st.caption("Upload the Split AC + Delta Charger workbook. Only main part rows are read (helper 'Receipt plan' rows "
+                   "are skipped). Store Stock, WIP and Insp come from the sheet's last calculated values, because in Excel "
+                   "they are VLOOKUPs into another PBOM file.")
+        f = st.file_uploader("Workbook (.xlsx)", type=["xlsx", "xlsm"], key="pbom_up")
+        if not f:
+            return
+        names, sheet, _ = pbom_read(f.getvalue())
+        sheet = st.selectbox("Sheet", names, index=names.index(sheet))
+        _, _, rows = pbom_read(f.getvalue(), sheet)
+        if rows is None:
+            st.error("No header row starting with 'Sl' and 'Part No' found in the first 40 rows of this sheet.")
+            return
+        buyers = sorted({str(r.get("buyer") or "").strip() for r in rows if r.get("buyer")})
+        bi = next((i for i, b in enumerate(buyers) if b.lower().startswith(str(p["buyer"]).lower())), 0)
+        buyer = st.selectbox("Buyer", buyers, index=bi)
+        sel = [r for r in rows if str(r.get("buyer") or "").strip().lower() == buyer.lower()]
+        st.write(f"**{len(sel)}** parts for {buyer} in '{sheet}'.")
+        prev = pd.DataFrame([{**{"Sl": r.get("sl"), "Part No": r.get("part_no"), "Description": r.get("description"),
+                                 "Project": r.get("project"), "Store Stock": r.get("store_stock"), "WIP": r.get("wip")},
+                              **pbom_calc(r)} for r in sel])
+        st.dataframe(prev, hide_index=True, width="stretch", height=300)
+        mode = st.radio("Import mode", ["Replace the current list", "Add new parts only (skip existing Part No)"], horizontal=True)
+        if st.button(f"Import {len(sel)} parts", type="primary", disabled=not sel):
+            if mode.startswith("Replace"):
+                D()["pbom"] = [{"_id": new_id(), **r} for r in sel]
+                n = len(sel)
+            else:
+                have = {str(r.get("part_no")) for r in recs}
+                new = [{"_id": new_id(), **r} for r in sel if str(r.get("part_no")) not in have]
+                D()["pbom"].extend(new)
+                n = len(new)
+            p["buyer"] = buyer
+            commit(f"PBOM: imported {n} parts ({buyer})")
+            st.session_state.pbom_goto = "Sheet view"
+            st.rerun()
+        return
+    if view == "Edit (grid)":
+        excel_grid(spec_coll("pbom"), computed=pbom_calc, height=520,
+                   dropdowns={"project": ["Common", "P1R5", "Single Phs"]},
+                   help_text="Grey columns on the right are calculated with the sheet's formulas. "
+                             "Project decides the formula: Common / P1R5 / Single Phs.")
+        return
+    if not recs:
+        st.info("No parts yet. Use 'Import from Master PBOM' to load the buyer's parts from the workbook.")
+        return
+    rows = []
+    for r in recs:
+        c = pbom_calc(r)
+        rows.append({"Sl": r.get("sl"), "Part No": r.get("part_no"), "Description": r.get("description"),
+                     "P1R5 Qty": num(r.get("p1r5_qty")), "Sing Phs Qty": num(r.get("sp_qty")), "Uom": r.get("uom"),
+                     "Buyer": r.get("buyer"), "Supplier": r.get("supplier"), "Project": r.get("project"),
+                     "Insp": num(r.get("insp")), "Store Stock": num(r.get("store_stock")), "WIP": num(r.get("wip")),
+                     **c, "Remarks": r.get("remarks")})
+    df = pd.DataFrame(rows)
+    q = st.text_input("Search", key="pbom_q", placeholder="Part no, description, supplier…")
+    only_short = st.checkbox("Only parts short (Total Shortage in Set < 0)", key="pbom_short")
+    if q:
+        df = df[df.apply(lambda x: q.lower() in " ".join(map(str, x.values)).lower(), axis=1)]
+    if only_short:
+        df = df[pd.to_numeric(df["Total Shortage in Set"], errors="coerce") < 0]
+    sh = pd.to_numeric(pd.DataFrame(rows)["Total Shortage in Set"], errors="coerce")
+    c = st.columns(4)
+    c[0].metric("Parts", len(rows))
+    c[1].metric("Short (< 0 sets)", int((sh < 0).sum()))
+    c[2].metric("Covered", int((sh >= 0).sum()))
+    c[3].metric("Worst shortage (sets)", f"{sh.min():,.1f}" if sh.notna().any() else "—")
+    st.dataframe(df.style.map(lambda v: "color:#C00000;font-weight:600" if isinstance(v, (int, float)) and v < 0 else "",
+                              subset=["Total Shortage in Set"]).format(precision=2, na_rep=""),
+                 hide_index=True, width="stretch", height=560)
+    st.download_button("⬇ Download Excel (with formulas)", pbom_excel(recs, p),
+                       f"PBOM_{p['buyer']}_{datetime.now():%Y%m%d}.xlsx", type="primary")
+
+
 # ----------------------------------------------------------------------------------------------
 # Main
 # ----------------------------------------------------------------------------------------------
+def page_parts_master():
+    v = st.radio("List", ["MQIS & Single Phase", "6DS Project"], horizontal=True, key="pm_view", label_visibility="collapsed")
+    page_parts("mqis" if v.startswith("MQIS") else "ds6")
+
+
+def page_tech():
+    v = st.radio("Comparison", ["DC Fan Comparison", "Teknic Parts (Domestic)"], horizontal=True, key="tc_view",
+                 label_visibility="collapsed")
+    page_fan() if v.startswith("DC") else page_teknic()
+
+
 PAGES = {
     "📊 Dashboard": page_dashboard,
-    "🗂 Project Tracking": page_projects,
-    "⏳ Pending & Completed": page_activities,
-    "🔩 MQIS & Single Phase Parts": lambda: page_parts("mqis"),
-    "🔧 6DS Project Parts": lambda: page_parts("ds6"),
-    "🏭 Supplier-wise": page_suppliers,
-    "🌀 DC Fan Comparison": page_fan,
-    "⚡ Teknic Parts (Domestic)": page_teknic,
-    "💾 Data Management": page_data,
+    "🗂 NPD Management": page_projects,
+    "⏳ NPD Pending & Completed": page_activities,
+    "🔩 Parts Master": page_parts_master,
+    "📋 Split AC PBOM (Buyer)": page_pbom,
+    "🏭 Supplier Management": page_suppliers_master,
+    "📨 RFQ Management": page_rfq,
+    "🧾 Purchase Orders": page_po,
+    "✉️ Email Approval Centre": page_email_centre,
+    "🔔 Supplier Follow-ups": page_followups,
+    "📦 Inventory & Shortage": page_inventory,
+    "⚖️ Technical Comparison": page_tech,
+    "🧪 DV/DVVP Tracking": page_dv,
+    "🔁 ECN/ECR Tracking": page_ecn,
+    "🤖 AI Assistant": page_ai,
+    "📑 Reports": page_reports,
+    "⚙️ Settings & Data": page_settings,
 }
 
 
@@ -2300,7 +3909,10 @@ def main():
     ss = st.session_state
     with st.sidebar:
         st.markdown(f"### ⚙️ {APP_TITLE}")
-        st.caption("E&E BOP · Alternate development · Sun Mobility CPMO")
+        st.caption("E&E BOP · NPD, sourcing & procurement · Sun Mobility CPMO")
+        nd = proc_kpis()["drafts"] if has_data() else 0
+        if nd:
+            st.caption(f"✉️ {nd} email(s) awaiting approval")
         page = st.radio("Navigate", list(PAGES), key="nav", label_visibility="collapsed")
         st.divider()
         st.caption(f"**Data:** {ss.source}")
