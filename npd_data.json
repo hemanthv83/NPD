@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-25T10:05:26",
+ "savedAt": "2026-11-25T10:05:43",
  "data": {
   "mqis": [
    [
@@ -3878,9 +3878,9 @@
     "attachments": [
      "PO_SMPLF2710392.pdf"
     ],
-    "status": "Draft",
+    "status": "Approved – send from Outlook",
     "created": "2026-11-25T10:02:13",
-    "updated": "2026-11-25T10:05:26",
+    "updated": "2026-11-25T10:05:43",
     "sent_at": null,
     "method": null,
     "error": null,
@@ -3923,6 +3923,18 @@
     "cc": "",
     "subject": "Purchase Order SMPLF2710392 – Acknowledgement and Delivery Confirmation",
     "detail": ""
+   },
+   {
+    "at": "2026-11-25T10:05:43",
+    "event": "Approved",
+    "email_id": "c9d332e050",
+    "type": "PO approval",
+    "ref": "SMPLF2710392",
+    "supplier": "AVVAD TECHNOLOGIES PVT LTD",
+    "to": "Hemanth.V@sunmobility.com",
+    "cc": "",
+    "subject": "Purchase Order SMPLF2710392 – Acknowledgement and Delivery Confirmation",
+    "detail": "for manual sending from Outlook"
    }
   ],
   "settings": {
