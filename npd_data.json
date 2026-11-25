@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-25T09:56:07",
+ "savedAt": "2026-11-25T09:56:11",
  "data": {
   "mqis": [
    [
@@ -3036,7 +3036,7 @@
    },
    {
     "_id": "85afb7e1a3",
-    "sl": 6,
+    "sl": 1,
     "part_no": "2040220289",
     "description": "UPS WITHOUT ISOLATION 1KVA",
     "p1r5_qty": 1,
@@ -3052,7 +3052,7 @@
    },
    {
     "_id": "14fc440b57",
-    "sl": 9,
+    "sl": 1,
     "part_no": "2040310081",
     "description": "DOCK FAN WITH CONNECTOR_DC 190 CFM",
     "p1r5_qty": 16,
@@ -3068,7 +3068,7 @@
    },
    {
     "_id": "8220786c1e",
-    "sl": 65,
+    "sl": 1,
     "part_no": "2040220295",
     "description": "FERRITE CORE-DISPLAY TOUCH CABLE",
     "p1r5_qty": 1,
@@ -3084,7 +3084,7 @@
    },
    {
     "_id": "a2ae817d4f",
-    "sl": 69,
+    "sl": 1,
     "part_no": "2040220089",
     "description": "40X80 CABLE TRUFF FRLS",
     "p1r5_qty": 2,
@@ -3100,7 +3100,7 @@
    },
    {
     "_id": "dbbb97a76e",
-    "sl": 107,
+    "sl": 1,
     "part_no": "2040120005",
     "description": "DC DC 24-12 CONVERTER",
     "p1r5_qty": 1,
@@ -3116,7 +3116,7 @@
    },
    {
     "_id": "f471a01a3d",
-    "sl": 113,
+    "sl": 1,
     "part_no": "2040220058",
     "description": "MODBUS TEMP/HUMIDITY SENSOR",
     "p1r5_qty": 2,
@@ -3132,7 +3132,7 @@
    },
    {
     "_id": "1d677272f5",
-    "sl": 114,
+    "sl": 1,
     "part_no": "2040220110",
     "description": "CABLE MANAGEMENT",
     "p1r5_qty": 19,
@@ -3148,7 +3148,7 @@
    },
    {
     "_id": "db4d25513b",
-    "sl": 117,
+    "sl": 1,
     "part_no": "2040120114",
     "description": "SPD",
     "p1r5_qty": 1,
@@ -3164,7 +3164,7 @@
    },
    {
     "_id": "5557e2f999",
-    "sl": 119,
+    "sl": 1,
     "part_no": "2040220173",
     "description": "2A GLASS FUSE",
     "p1r5_qty": 4,
@@ -3180,7 +3180,7 @@
    },
    {
     "_id": "36450ce5d8",
-    "sl": 121,
+    "sl": 1,
     "part_no": "2040220325",
     "description": "TERMINAL BLOCK M5",
     "p1r5_qty": 6,
@@ -3196,7 +3196,7 @@
    },
    {
     "_id": "b99778a039",
-    "sl": 125,
+    "sl": 1,
     "part_no": "2040220153",
     "description": "EMERGENCY SWITCH",
     "p1r5_qty": 1,
@@ -3212,7 +3212,7 @@
    },
    {
     "_id": "22d7f112b3",
-    "sl": 126,
+    "sl": 1,
     "part_no": "2050220223",
     "description": "PIN LUGS 0.5 SQ.MM CE005008",
     "p1r5_qty": 8,
@@ -3228,7 +3228,7 @@
    },
    {
     "_id": "bc27d95401",
-    "sl": 127,
+    "sl": 1,
     "part_no": "2040420001",
     "description": "MULTI PORT USB HUB",
     "p1r5_qty": 1,
@@ -3244,7 +3244,7 @@
    },
    {
     "_id": "b7dad30b31",
-    "sl": 135,
+    "sl": 1,
     "part_no": "2040220084",
     "description": "PANEL LAMP",
     "p1r5_qty": 1,
@@ -3260,7 +3260,7 @@
    },
    {
     "_id": "1e8f1f9582",
-    "sl": 168,
+    "sl": 1,
     "part_no": "2040220221",
     "description": "4P RCCB 30MA,32A -C&S",
     "p1r5_qty": 2,
@@ -3276,7 +3276,7 @@
    },
    {
     "_id": "7a4915069c",
-    "sl": 170,
+    "sl": 1,
     "part_no": "2040130116",
     "description": "RCCB 2 POLE 40A",
     "p1r5_qty": 1,
@@ -3292,7 +3292,7 @@
    },
    {
     "_id": "6dc5cfc5ef",
-    "sl": 172,
+    "sl": 1,
     "part_no": "2040220043",
     "description": "TB END CLAMPS",
     "p1r5_qty": 4,
@@ -3308,7 +3308,7 @@
    },
    {
     "_id": "e97471229a",
-    "sl": 174,
+    "sl": 1,
     "part_no": "2040220198",
     "description": "SEALING GLAND M40 X 1.5 - TRGM40B",
     "p1r5_qty": 1,
@@ -3324,7 +3324,7 @@
    },
    {
     "_id": "96ef7b127f",
-    "sl": 178,
+    "sl": 1,
     "part_no": "2040310045",
     "description": "PANEL MOUNT RJ45 CONNECTOR",
     "p1r5_qty": 1,
@@ -3340,7 +3340,7 @@
    },
    {
     "_id": "d0e5349b0f",
-    "sl": 183,
+    "sl": 1,
     "part_no": "2040220167",
     "description": "RING TERMINAL M5,16SQMM WIRE",
     "p1r5_qty": 5,
@@ -3356,7 +3356,7 @@
    },
    {
     "_id": "2f21346139",
-    "sl": 194,
+    "sl": 1,
     "part_no": "2040220170",
     "description": "EMERGENCY SW WARNING PLATE",
     "p1r5_qty": 1,
