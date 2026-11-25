@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-25T10:07:07",
+ "savedAt": "2026-11-25T10:45:13",
  "data": {
   "mqis": [
    [
@@ -3093,7 +3093,7 @@
   "ecn": [],
   "pbom": [
    {
-    "_id": "905cfbeee7",
+    "_id": "f149feca84",
     "sl": 1,
     "part_no": 2040211731,
     "description": "CCU-LNV SE50 (512GB)",
@@ -3104,12 +3104,12 @@
     "supplier": "AMAARA TECHNOLOGIES",
     "project": "Common",
     "insp": 0,
-    "store_stock": 48,
+    "store_stock": 148,
     "wip": 23,
     "remarks": "25th-100 Sets"
    },
    {
-    "_id": "c0fb9c0440",
+    "_id": "ac772fe8a1",
     "sl": 2,
     "part_no": 2040220289,
     "description": "UPS WITHOUT ISOLATION 1KVA",
@@ -3125,7 +3125,7 @@
     "remarks": null
    },
    {
-    "_id": "73620feaf3",
+    "_id": "438d76daf3",
     "sl": 3,
     "part_no": 2040310081,
     "description": "DOCK FAN WITH CONNECTOR_DC 190 CFM",
@@ -3141,7 +3141,7 @@
     "remarks": null
    },
    {
-    "_id": "904f78a387",
+    "_id": "757c727dd5",
     "sl": 4,
     "part_no": 2040220295,
     "description": "FERRITE CORE-DISPLAY TOUCH CABLE",
@@ -3157,7 +3157,7 @@
     "remarks": null
    },
    {
-    "_id": "0b4353a895",
+    "_id": "0b640879f3",
     "sl": 5,
     "part_no": 2040220089,
     "description": "40X80 CABLE TRUFF FRLS",
@@ -3173,7 +3173,7 @@
     "remarks": null
    },
    {
-    "_id": "c97d7087cf",
+    "_id": "f38a0a0a36",
     "sl": 6,
     "part_no": 2040120005,
     "description": "DC DC 24-12 CONVERTER",
@@ -3189,7 +3189,7 @@
     "remarks": null
    },
    {
-    "_id": "25fa6566df",
+    "_id": "1d3f7a25e0",
     "sl": 7,
     "part_no": 2040220058,
     "description": "MODBUS TEMP/HUMIDITY SENSOR",
@@ -3205,7 +3205,7 @@
     "remarks": null
    },
    {
-    "_id": "f537fcb2b3",
+    "_id": "028c67e895",
     "sl": 8,
     "part_no": 2040220110,
     "description": "CABLE MANAGEMENT",
@@ -3221,7 +3221,7 @@
     "remarks": "30th-100 Set"
    },
    {
-    "_id": "8944fc1c61",
+    "_id": "837a2908c2",
     "sl": 9,
     "part_no": 2040120114,
     "description": "SPD",
@@ -3237,7 +3237,7 @@
     "remarks": null
    },
    {
-    "_id": "647b62d58a",
+    "_id": "a55983d8d2",
     "sl": 10,
     "part_no": 2040220173,
     "description": "2A GLASS FUSE",
@@ -3253,7 +3253,7 @@
     "remarks": null
    },
    {
-    "_id": "79b26478d3",
+    "_id": "2989b7ee48",
     "sl": 11,
     "part_no": 2040220325,
     "description": "TERMINAL BLOCK M5",
@@ -3269,7 +3269,7 @@
     "remarks": null
    },
    {
-    "_id": "bec4d363db",
+    "_id": "bfdf0047f9",
     "sl": 12,
     "part_no": 2040220153,
     "description": "EMERGENCY SWITCH",
@@ -3285,7 +3285,7 @@
     "remarks": null
    },
    {
-    "_id": "d7ad35a538",
+    "_id": "d7585fdd9b",
     "sl": 13,
     "part_no": 2050220223,
     "description": "PIN LUGS 0.5 SQ.MM CE005008",
@@ -3301,7 +3301,7 @@
     "remarks": null
    },
    {
-    "_id": "9211dc9d50",
+    "_id": "69e0243cfc",
     "sl": 14,
     "part_no": 2040420001,
     "description": "MULTI PORT USB HUB",
@@ -3317,7 +3317,7 @@
     "remarks": null
    },
    {
-    "_id": "5654f4f926",
+    "_id": "1870e1de35",
     "sl": 15,
     "part_no": 2040220084,
     "description": "PANEL LAMP",
@@ -3333,7 +3333,7 @@
     "remarks": null
    },
    {
-    "_id": "273bfe5f9d",
+    "_id": "9e74aace4d",
     "sl": 16,
     "part_no": 2040220221,
     "description": "4P RCCB 30MA,32A -C&S",
@@ -3349,7 +3349,7 @@
     "remarks": null
    },
    {
-    "_id": "33e87c3f65",
+    "_id": "ad366d8ff6",
     "sl": 17,
     "part_no": 2040130116,
     "description": "RCCB 2 POLE 40A",
@@ -3365,7 +3365,7 @@
     "remarks": null
    },
    {
-    "_id": "1d93e10bc2",
+    "_id": "977b627f16",
     "sl": 18,
     "part_no": 2040220043,
     "description": "TB END CLAMPS",
@@ -3381,7 +3381,7 @@
     "remarks": null
    },
    {
-    "_id": "80d7afa9c8",
+    "_id": "3d5195639a",
     "sl": 19,
     "part_no": 2040220198,
     "description": "SEALING GLAND M40 X 1.5 - TRGM40B",
@@ -3397,7 +3397,7 @@
     "remarks": null
    },
    {
-    "_id": "26f12763f3",
+    "_id": "12f2862e6c",
     "sl": 20,
     "part_no": 2040310045,
     "description": "PANEL MOUNT RJ45 CONNECTOR",
@@ -3413,7 +3413,7 @@
     "remarks": null
    },
    {
-    "_id": "af6c5bdd04",
+    "_id": "4f3dce4219",
     "sl": 21,
     "part_no": 2040220167,
     "description": "RING TERMINAL M5,16SQMM WIRE",
@@ -3429,7 +3429,7 @@
     "remarks": null
    },
    {
-    "_id": "7741ff3890",
+    "_id": "4aff19bfee",
     "sl": 22,
     "part_no": 2040220170,
     "description": "EMERGENCY SW WARNING PLATE",
@@ -3445,7 +3445,7 @@
     "remarks": null
    },
    {
-    "_id": "e52707ccdf",
+    "_id": "e2098da529",
     "sl": 23,
     "part_no": 2040220169,
     "description": "EMERGENCY SWITCH COVER",
@@ -3461,7 +3461,7 @@
     "remarks": null
    },
    {
-    "_id": "bc0533dfc1",
+    "_id": "d325977ea3",
     "sl": 24,
     "part_no": 2040220078,
     "description": "ETHERNET S/W",
@@ -3477,7 +3477,7 @@
     "remarks": "5th Dec-100 Sets"
    },
    {
-    "_id": "921e01bacb",
+    "_id": "1c1699b5d0",
     "sl": 25,
     "part_no": 2040220248,
     "description": "ENERGY METER 230V-1 PHASE",
@@ -3493,7 +3493,7 @@
     "remarks": null
    },
    {
-    "_id": "93fb1da483",
+    "_id": "5d5045c48c",
     "sl": 26,
     "part_no": 2040220096,
     "description": "6MM SPIRAL FR GRADE",
@@ -3509,7 +3509,7 @@
     "remarks": null
    },
    {
-    "_id": "f4d7177b6a",
+    "_id": "d0c0da69cb",
     "sl": 27,
     "part_no": 2040410012,
     "description": "VCI EMITTER",
@@ -3525,7 +3525,7 @@
     "remarks": null
    },
    {
-    "_id": "a0d8c7e64b",
+    "_id": "442e71947c",
     "sl": 28,
     "part_no": 2040220128,
     "description": "2 WAY TB FOR PANEL LAMP",
@@ -3541,7 +3541,7 @@
     "remarks": "4th Dec-50 Sets"
    },
    {
-    "_id": "14d262edb3",
+    "_id": "0dd1fb52b5",
     "sl": 29,
     "part_no": 2040220296,
     "description": "FERRITE CORE-HDMI CABLE",
@@ -3557,7 +3557,7 @@
     "remarks": null
    },
    {
-    "_id": "8238e36f6e",
+    "_id": "4965428e2a",
     "sl": 30,
     "part_no": 2040310003,
     "description": "12V VRLA BATTERY",
@@ -3573,7 +3573,7 @@
     "remarks": null
    },
    {
-    "_id": "ea53a02d22",
+    "_id": "06eb195c1d",
     "sl": 31,
     "part_no": 2040220419,
     "description": "MQIS DOOR LIMIT SWITCH",
@@ -3589,7 +3589,7 @@
     "remarks": null
    },
    {
-    "_id": "5037148995",
+    "_id": "d7141e3f05",
     "sl": 32,
     "part_no": 2040220097,
     "description": "9MM SPIRAL FR GRADE",
@@ -3605,7 +3605,7 @@
     "remarks": null
    },
    {
-    "_id": "fad2e83a69",
+    "_id": "16110f150c",
     "sl": 33,
     "part_no": 2040220387,
     "description": "ENERGY METER-3PH",
@@ -3621,7 +3621,7 @@
     "remarks": null
    },
    {
-    "_id": "8397734035",
+    "_id": "3effe4cce9",
     "sl": 34,
     "part_no": 2040220379,
     "description": "3POLE POWER TERMINAL BLOCK",
@@ -3637,7 +3637,7 @@
     "remarks": null
    },
    {
-    "_id": "3f4e8026ee",
+    "_id": "15f4f9f2d3",
     "sl": 35,
     "part_no": 2040220148,
     "description": "INDICATION LAMP Y, 22.5MM DIA, YELLOW COLOUR",
@@ -3653,7 +3653,7 @@
     "remarks": null
    },
    {
-    "_id": "a94ffac7c0",
+    "_id": "4e848eb00b",
     "sl": 36,
     "part_no": 2040220378,
     "description": "RCCB 2POLE 63A",
@@ -3669,7 +3669,7 @@
     "remarks": null
    },
    {
-    "_id": "eafbd013df",
+    "_id": "2073916d09",
     "sl": 37,
     "part_no": 2040220149,
     "description": "INDICATION LAMP B, 22.5MM DIA, BLUE COLOUR",
@@ -3685,7 +3685,7 @@
     "remarks": null
    },
    {
-    "_id": "4fb5015314",
+    "_id": "bcc32bbbd7",
     "sl": 38,
     "part_no": 2040220147,
     "description": "INDICATION LAMP R, 22.5MM DIA, RED COLOUR",
@@ -3701,7 +3701,7 @@
     "remarks": null
    },
    {
-    "_id": "23be27c79b",
+    "_id": "28338cade6",
     "sl": 39,
     "part_no": 2040220377,
     "description": "RCCB 4POLE 63A",
@@ -3717,7 +3717,7 @@
     "remarks": null
    },
    {
-    "_id": "93b0a97085",
+    "_id": "b82b20e112",
     "sl": 40,
     "part_no": 2040220386,
     "description": "3POLE CONTACTOR 230VAC 60A",
@@ -3733,7 +3733,7 @@
     "remarks": null
    },
    {
-    "_id": "089c2e772f",
+    "_id": "03a7efb502",
     "sl": 41,
     "part_no": 2040220385,
     "description": "CURRENT TRANSFORMER-CT",
@@ -3749,7 +3749,7 @@
     "remarks": null
    },
    {
-    "_id": "8e3f4a4552",
+    "_id": "3380cac20b",
     "sl": 42,
     "part_no": 2040220388,
     "description": "6A FUSE TB",
@@ -3765,7 +3765,7 @@
     "remarks": null
    },
    {
-    "_id": "ad98288137",
+    "_id": "b58050e422",
     "sl": 43,
     "part_no": 2040220389,
     "description": "MCCB FOR STATION PROTECTION",
@@ -3781,7 +3781,7 @@
     "remarks": null
    },
    {
-    "_id": "29049f3303",
+    "_id": "6aee0d1e9c",
     "sl": 44,
     "part_no": 2030220047,
     "description": "TERMINAL_BLOCK_M8XM8",
@@ -3797,7 +3797,7 @@
     "remarks": null
    },
    {
-    "_id": "61369369d8",
+    "_id": "fe5f34a03b",
     "sl": 45,
     "part_no": 2040220301,
     "description": "SURGE PROTECTION DEVICE -TYPE 2",
@@ -3813,7 +3813,7 @@
     "remarks": null
    },
    {
-    "_id": "85ddcb0773",
+    "_id": "adbcefc471",
     "sl": 46,
     "part_no": 2040220383,
     "description": "VOLTAGE PROTECTION RELAY-UVOV",
@@ -3829,7 +3829,7 @@
     "remarks": null
    },
    {
-    "_id": "2c39417655",
+    "_id": "a1c48a7382",
     "sl": 47,
     "part_no": 2040220384,
     "description": "16A 10KA DOUBLE POLE MCB",
