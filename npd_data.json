@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-25T09:56:21",
+ "savedAt": "2026-11-25T09:57:00",
  "data": {
   "mqis": [
    [
@@ -3018,22 +3018,6 @@
   "dv": [],
   "ecn": [],
   "pbom": [
-   {
-    "_id": "281a373e01",
-    "sl": 1,
-    "part_no": "2040211731",
-    "description": "CCU-LNV SE50 (512GB)",
-    "p1r5_qty": 1,
-    "sp_qty": 1,
-    "uom": "Nos",
-    "buyer": "Hemanth",
-    "supplier": "AMAARA TECHNOLOGIES",
-    "project": "Common",
-    "insp": 0,
-    "store_stock": 48,
-    "wip": 23,
-    "remarks": "25th-100 Sets"
-   },
    {
     "_id": "85afb7e1a3",
     "sl": 1,
