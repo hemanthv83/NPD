@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-26T08:38:03",
+ "savedAt": "2026-11-26T08:38:45",
  "data": {
   "mqis": [
    [
@@ -2736,7 +2736,7 @@
     "ecn_no": "00391",
     "ecn_date": "2026-11-30",
     "type": "ECR",
-    "project": null,
+    "project": "UPS - Numeric",
     "part_no": null,
     "description": null,
     "from_make": null,
