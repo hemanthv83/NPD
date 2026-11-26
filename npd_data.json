@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-26T13:59:54",
+ "savedAt": "2026-11-26T13:59:56",
  "data": {
   "mqis": [
    [
@@ -2728,7 +2728,7 @@
   "suppliers": [],
   "rfq": [
    {
-    "_id": "5cf05885c2",
+    "_id": "e8a0d17b0b",
     "rfq_no": null,
     "rfq_date": null,
     "project": null,
@@ -2742,7 +2742,7 @@
     "remarks": null
    },
    {
-    "_id": "1ba60643fb",
+    "_id": "1502db6cc7",
     "rfq_no": null,
     "rfq_date": null,
     "project": null,
@@ -2756,7 +2756,7 @@
     "remarks": null
    },
    {
-    "_id": "c817588704",
+    "_id": "c9790b71ac",
     "rfq_no": null,
     "rfq_date": null,
     "project": null,
@@ -2765,7 +2765,7 @@
     "supplier": null,
     "sent_date": "2026-11-26",
     "quote_due": null,
-    "quote_received": null,
+    "quote_received": "2026-11-26",
     "status": null,
     "remarks": null
    }
