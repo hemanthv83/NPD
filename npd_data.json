@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-26T13:59:28",
+ "savedAt": "2026-11-26T13:59:54",
  "data": {
   "mqis": [
    [
@@ -2726,7 +2726,50 @@
    "Closure & Handover to Regular Buyer"
   ],
   "suppliers": [],
-  "rfq": [],
+  "rfq": [
+   {
+    "_id": "5cf05885c2",
+    "rfq_no": null,
+    "rfq_date": null,
+    "project": null,
+    "part_no": null,
+    "description": null,
+    "supplier": null,
+    "sent_date": null,
+    "quote_due": null,
+    "quote_received": null,
+    "status": null,
+    "remarks": null
+   },
+   {
+    "_id": "1ba60643fb",
+    "rfq_no": null,
+    "rfq_date": null,
+    "project": null,
+    "part_no": null,
+    "description": null,
+    "supplier": null,
+    "sent_date": null,
+    "quote_due": null,
+    "quote_received": null,
+    "status": null,
+    "remarks": null
+   },
+   {
+    "_id": "c817588704",
+    "rfq_no": null,
+    "rfq_date": null,
+    "project": null,
+    "part_no": null,
+    "description": null,
+    "supplier": null,
+    "sent_date": "2026-11-26",
+    "quote_due": null,
+    "quote_received": null,
+    "status": null,
+    "remarks": null
+   }
+  ],
   "pos": [],
   "inventory": [],
   "dv": [
