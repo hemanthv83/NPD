@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-26T08:36:33",
+ "savedAt": "2026-11-26T08:36:44",
  "data": {
   "mqis": [
    [
@@ -2734,7 +2734,7 @@
    {
     "_id": "82d652b780",
     "ecn_no": "00391",
-    "ecn_date": "2026-11-26",
+    "ecn_date": "2026-11-29",
     "type": null,
     "project": null,
     "part_no": null,
