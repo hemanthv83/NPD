@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-26T08:35:40",
+ "savedAt": "2026-11-26T08:36:23",
  "data": {
   "mqis": [
    [
@@ -2734,7 +2734,7 @@
    {
     "_id": "82d652b780",
     "ecn_no": "ECR-00391",
-    "ecn_date": null,
+    "ecn_date": "2026-11-26",
     "type": null,
     "project": null,
     "part_no": null,
@@ -2796,6 +2796,45 @@
      "approver",
      "status",
      "impl_date",
+     "remarks"
+    ],
+    "renumber": false,
+    "hidden": [
+     "_id"
+    ]
+   },
+   "dv": {
+    "custom": {},
+    "labels": {
+     "_id": "ID",
+     "project": "Project",
+     "part_no": "Part No",
+     "supplier": "Supplier",
+     "samples_handed": "Samples Handed to Engg",
+     "dv_plan": "DV Plan",
+     "dv_actual": "DV Actual",
+     "dv_result": "DV Result",
+     "dvvp_plan": "DVVP Plan",
+     "dvvp_actual": "DVVP Actual",
+     "dvvp_result": "DVVP Result",
+     "report": "Report Ref",
+     "status": "Status",
+     "remarks": "Remarks"
+    },
+    "order": [
+     "_id",
+     "project",
+     "part_no",
+     "supplier",
+     "samples_handed",
+     "dv_plan",
+     "dv_actual",
+     "dv_result",
+     "dvvp_plan",
+     "dvvp_actual",
+     "dvvp_result",
+     "report",
+     "status",
      "remarks"
     ],
     "renumber": false,
