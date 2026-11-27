@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-27T04:27:17",
+ "savedAt": "2026-11-27T04:27:29",
  "data": {
   "mqis": [
    [
@@ -1272,7 +1272,7 @@
       "Receipt of samples along with required supplier QA docs & reports",
       "2026-09-07",
       "2026-10-25",
-      "received"
+      "UPS received on 07-09-2026 but, SNMP card delayed received on 25-10-2026"
      ],
      [
       12,
