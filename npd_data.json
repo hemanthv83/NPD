@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-26T13:59:56",
+ "savedAt": "2026-11-27T04:27:17",
  "data": {
   "mqis": [
    [
@@ -1271,7 +1271,7 @@
       11,
       "Receipt of samples along with required supplier QA docs & reports",
       "2026-09-07",
-      "2026-09-10",
+      "2026-10-25",
       "received"
      ],
      [
@@ -3859,6 +3859,25 @@
     "hidden": [
      "_id"
     ]
+   },
+   "acts": {
+    "custom": {},
+    "labels": {
+     "step": "Step",
+     "activity": "Activity",
+     "plan": "Plan Date",
+     "actual": "Actual Date",
+     "remarks": "Remarks"
+    },
+    "order": [
+     "step",
+     "activity",
+     "plan",
+     "actual",
+     "remarks"
+    ],
+    "renumber": true,
+    "hidden": []
    }
   }
  }
