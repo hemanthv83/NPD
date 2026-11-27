@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-27T04:27:29",
+ "savedAt": "2026-11-27T04:28:00",
  "data": {
   "mqis": [
    [
@@ -1273,6 +1273,13 @@
       "2026-09-07",
       "2026-10-25",
       "UPS received on 07-09-2026 but, SNMP card delayed received on 25-10-2026"
+     ],
+     [
+      null,
+      null,
+      null,
+      null,
+      null
      ],
      [
       12,
