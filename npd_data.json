@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-27T04:28:00",
+ "savedAt": "2026-11-27T04:28:17",
  "data": {
   "mqis": [
    [
@@ -1276,7 +1276,7 @@
      ],
      [
       null,
-      null,
+      "Technical Open Points",
       null,
       null,
       null
