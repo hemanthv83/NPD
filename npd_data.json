@@ -1,6 +1,6 @@
 {
  "app": "NPD & Sourcing Management",
- "savedAt": "2026-11-27T04:28:28",
+ "savedAt": "2026-11-27T04:29:09",
  "data": {
   "mqis": [
    [
@@ -1273,13 +1273,6 @@
       "2026-09-07",
       "2026-10-25",
       "UPS received on 07-09-2026 but, SNMP card delayed received on 25-10-2026"
-     ],
-     [
-      null,
-      "Technical Open Points",
-      null,
-      null,
-      "1. Numeric team to provide SNMP configuration training to our team. 2. All SNMP-related documents to be shared by tomorrow, 14-Oct-2026, especially the OID file. 11 open points is there supplier given ETA close by 13/11/2026."
      ],
      [
       12,
